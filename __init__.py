@@ -1,6 +1,6 @@
-# Copyright 2016 Mycroft AI, Inc.
+# Copyright 2018 Justin Warwick and Mycroft AI, Inc.
 #
-# This file is part of Mycroft Core.
+# This file is an extension to Mycroft Core.
 #
 # Mycroft Core is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,6 +29,10 @@ from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
 from mycroft.util.log import getLogger
 
+from jira import JIRA
+import os
+import re
+
 __author__ = 'jrwarwick'
 
 # Logger: used for debug lines, like "LOGGER.debug(xyz)". These
@@ -48,6 +52,23 @@ class JIRASkill(MycroftSkill):
     # creates and registers each intent that the skill uses
     def initialize(self):
         self.load_data_files(dirname(__file__))
+        try:
+            if self.settings.get("url", "") or \
+               self.settings.get("username", "") or \
+               self.settings.get("password", ""):
+                   self._is_setup = True
+            else:
+                self.speak_dialog("Please navigate to home.mycroft.ai to establish or complete JIRA Service Desk server access configuration.")
+        except Exception as e:
+            LOG.error(e)
+
+        #(fallback?)#jira = JIRA(server=os.environ['JIRA_SERVER_URL'],basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD'])) #  http://bakjira01.int.bry.com:8080/rest/api/2/
+        jira = JIRA(server=self.settings.get("url", ""),basic_auth=(self.settings.get("username", ""),self.settings.get("password", "")) #  http://bakjira01.int.bry.com:8080/rest/api/2/
+
+
+        status_report_intent = IntentBuilder("StatusReportIntent").\
+            require("StatusReportKeyword").build()
+        self.register_intent(status_report_intent, self.handle_status_report_intent)
 
         thank_you_intent = IntentBuilder("ThankYouIntent").\
             require("ThankYouKeyword").build()
@@ -69,6 +90,27 @@ class JIRASkill(MycroftSkill):
     # actually speak the text it's passed--instead, that text is the filename
     # of a file in the dialog folder, and Mycroft speaks its contents when
     # the method is called.
+    def handle_status_report_intent(self, message):
+        self.speak_dialog("JIRA Service Desk status report:")
+        inquiry = jira.search_issues('assignee is EMPTY AND status != Resolved ORDER BY createdDate DESC')
+        if inquiry.total < 1:
+            print "No JIRA issues found in the unassigned queue."
+        else:
+            print str( inquiry.total ) + " issues found in the unassigned queue."
+            thissue = jira.issue(inquiry[0].key,fields='summary,comment')
+            print "Latest issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary)
+
+        inquiry = jira.search_issues('resolution = Unresolved AND priority > Medium ORDER BY priority DESC')
+        if inquiry.total < 1:
+            print "No HIGH priority JIRA issues remain open."
+        else:
+            print str( inquiry.total ) + " high priority issue" + ('','s')[inquiry.total > 1] + " remain" + ('s','')[inquiry.total > 1] + " open!"
+            thissue = jira.issue(inquiry[0].key,fields='summary,comment')
+            print "Highest priority issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary)
+
+
+        #TODO: call python script instead? 
+
     def handle_thank_you_intent(self, message):
         self.speak_dialog("welcome")
 

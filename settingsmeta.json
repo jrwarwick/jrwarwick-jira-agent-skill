@@ -1,0 +1,39 @@
+{
+    "name": "JIRA",
+    "skillMetadata": {
+        "sections": [
+            {
+
+                "name": "Login",
+                "fields": [
+                    {
+			"type": "label",
+			"label": "JIRA Service Desk technician login credentials required for API utilization."
+		    },
+                    {
+                        "name": "username",
+                        "type": "text",
+                        "label": "Username",
+                        "value": "jrw"
+                    },
+                    {
+                        "name": "password",
+                        "type": "password",
+                        "label": "Password",
+                        "value": ""
+                    }
+                ]
+            },
+	    {
+		 "name": "Server",
+		 "fields": [
+                    {
+                        "name": "url",
+                        "type": "text",
+                        "label": "Server API URL",
+                        "value": "http://bakjira01.int.bry.com:8080/rest/api/2/",
+                        "placeholder": "http://serverhost.domain.tld:8080/rest/api/2/"
+                    }
+        ]
+    }
+}
