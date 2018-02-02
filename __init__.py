@@ -60,11 +60,13 @@ class JIRASkill(MycroftSkill):
             else:
                 self.speak_dialog("Please navigate to home.mycroft.ai to establish or complete JIRA Service Desk server access configuration.")
         except Exception as e:
-            LOG.error(e)
-
-        #(fallback?)#jira = JIRA(server=os.environ['JIRA_SERVER_URL'],basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD'])) #  http://bakjira01.int.bry.com:8080/rest/api/2/
-        jira = JIRA(server=self.settings.get("url", ""),basic_auth=(self.settings.get("username", ""),self.settings.get("password", "")) )
-        #  http://bakjira01.int.bry.com:8080/rest/api/2/
+            LOGGER.error(e)
+        try:
+            #(fallback?)#jira = JIRA(server=os.environ['JIRA_SERVER_URL'],basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD'])) #  http://bakjira01.int.bry.com:8080/rest/api/2/        
+            jira = JIRA(server=self.settings.get("url", ""),basic_auth=(self.settings.get("username", ""),self.settings.get("password", "")) )
+            #  http://bakjira01.int.bry.com:8080/rest/api/2/
+        except Exception as e:
+            LOGGER.error(e)
 
 
         status_report_intent = IntentBuilder("StatusReportIntent").\
