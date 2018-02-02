@@ -58,7 +58,7 @@ class JIRASkill(MycroftSkill):
                self.settings.get("password", ""):
                    self._is_setup = True
             else:
-                self.speak_dialog("Please navigate to home.mycroft.ai to establish or complete JIRA Service Desk server access configuration.")
+                self.speak("Please navigate to home.mycroft.ai to establish or complete JIRA Service Desk server access configuration.")
         except Exception as e:
             LOGGER.error(e)
         try:
@@ -94,22 +94,22 @@ class JIRASkill(MycroftSkill):
     # of a file in the dialog folder, and Mycroft speaks its contents when
     # the method is called.
     def handle_status_report_intent(self, message):
-        self.speak_dialog("JIRA Service Desk status report:")
+        self.speak("JIRA Service Desk status report:")
         inquiry = jira.search_issues('assignee is EMPTY AND status != Resolved ORDER BY createdDate DESC')
         if inquiry.total < 1:
-            self.speak_dialog( "No JIRA issues found in the unassigned queue." )
+            self.speak( "No JIRA issues found in the unassigned queue." )
         else:
-            self.speak_dialog( str( inquiry.total ) + " issues found in the unassigned queue." )
+            self.speak( str( inquiry.total ) + " issues found in the unassigned queue." )
             thissue = jira.issue(inquiry[0].key,fields='summary,comment')
-            self.speak_dialog( "Latest issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary) )
+            self.speak( "Latest issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary) )
 
         inquiry = jira.search_issues('resolution = Unresolved AND priority > Medium ORDER BY priority DESC')
         if inquiry.total < 1:
-            self.speak_dialog( "No HIGH priority JIRA issues remain open." )
+            self.speak( "No HIGH priority JIRA issues remain open." )
         else:
-            self.speak_dialog( str( inquiry.total ) + " high priority issue" + ('','s')[inquiry.total > 1] + " remain" + ('s','')[inquiry.total > 1] + " open!" )
+            self.speak( str( inquiry.total ) + " high priority issue" + ('','s')[inquiry.total > 1] + " remain" + ('s','')[inquiry.total > 1] + " open!" )
             thissue = jira.issue(inquiry[0].key,fields='summary,comment')
-            self.speak_dialog( "Highest priority issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary) )
+            self.speak( "Highest priority issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary) )
 
 
         #TODO: call python script instead? 
