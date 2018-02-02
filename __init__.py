@@ -97,19 +97,19 @@ class JIRASkill(MycroftSkill):
         self.speak_dialog("JIRA Service Desk status report:")
         inquiry = jira.search_issues('assignee is EMPTY AND status != Resolved ORDER BY createdDate DESC')
         if inquiry.total < 1:
-            print "No JIRA issues found in the unassigned queue."
+            self.speak_dialog( "No JIRA issues found in the unassigned queue." )
         else:
-            print str( inquiry.total ) + " issues found in the unassigned queue."
+            self.speak_dialog( str( inquiry.total ) + " issues found in the unassigned queue." )
             thissue = jira.issue(inquiry[0].key,fields='summary,comment')
-            print "Latest issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary)
+            self.speak_dialog( "Latest issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary) )
 
         inquiry = jira.search_issues('resolution = Unresolved AND priority > Medium ORDER BY priority DESC')
         if inquiry.total < 1:
-            print "No HIGH priority JIRA issues remain open."
+            self.speak_dialog( "No HIGH priority JIRA issues remain open." )
         else:
-            print str( inquiry.total ) + " high priority issue" + ('','s')[inquiry.total > 1] + " remain" + ('s','')[inquiry.total > 1] + " open!"
+            self.speak_dialog( str( inquiry.total ) + " high priority issue" + ('','s')[inquiry.total > 1] + " remain" + ('s','')[inquiry.total > 1] + " open!" )
             thissue = jira.issue(inquiry[0].key,fields='summary,comment')
-            print "Highest priority issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary)
+            self.speak_dialog( "Highest priority issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary) )
 
 
         #TODO: call python script instead? 
