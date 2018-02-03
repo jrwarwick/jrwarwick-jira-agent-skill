@@ -119,7 +119,7 @@ class JIRASkill(MycroftSkill):
 
 
     # Establish basic login via jira package interface (RESTful API)
-    def server_login(self,message):
+    def server_login(self):
         try:
             if self.settings.get("url", "") or \
                self.settings.get("username", "") or \
