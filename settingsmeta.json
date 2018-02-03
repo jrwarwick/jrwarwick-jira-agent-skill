@@ -8,9 +8,9 @@
                     {
                         "name": "url",
                         "type": "text",
-                        "label": "Server API URL",
-                        "value": "http://bakjira01.int.bry.com:8080/rest/api/2/",
-                        "placeholder": "http://serverhost.domain.tld:8080/rest/api/2/"
+                        "label": "Server API URL base",
+                        "value": "http://bakjira01.int.bry.com:8080/",
+                        "placeholder": "http://serverhost.domain.tld:8080/"
                     }
                 ]
             },		
