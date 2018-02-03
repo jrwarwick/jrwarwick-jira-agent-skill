@@ -84,7 +84,7 @@ class JIRASkill(MycroftSkill):
     # the method is called.
     def handle_status_report_intent(self, message):
         if self.jira == None:
-            self.server_login(self)
+            self.server_login()
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
@@ -119,7 +119,7 @@ class JIRASkill(MycroftSkill):
 
 
     # Establish basic login via jira package interface (RESTful API)
-    def server_login(self):
+    def server_login():
         try:
             if self.settings.get("url", "") or \
                self.settings.get("username", "") or \
