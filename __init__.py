@@ -88,15 +88,15 @@ class JIRASkill(MycroftSkill):
             require("ThankYouKeyword").build()
         self.register_intent(thank_you_intent, self.handle_thank_you_intent)
 
-        how_are_you_intent = IntentBuilder("HowAreYouIntent").\
-            require("HowAreYouKeyword").build()
-        self.register_intent(how_are_you_intent,
-                             self.handle_how_are_you_intent)
+        issue_status_intent = IntentBuilder("IssueStatusIntent").\
+            require("IssueStatusKeyword").build()
+        self.register_intent(issue_status_intent,
+                             self.handle_issue_status_intent)
 
-        hello_world_intent = IntentBuilder("HelloWorldIntent").\
-            require("HelloWorldKeyword").build()
-        self.register_intent(hello_world_intent,
-                             self.handle_hello_world_intent)
+        raise_issue_intent = IntentBuilder("RaiseIssueIntent").\
+            require("RaiseIssueKeyword").build()
+        self.register_intent(raise_issue_intent,
+                             self.handle_raise_issue_intent)
 
         server_login(self)
 
@@ -130,17 +130,19 @@ class JIRASkill(MycroftSkill):
             thissue = self.jira.issue(inquiry[0].key,fields='summary,comment')
             self.speak( "Highest priority issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary) )
 
-
-        #TODO: call python script instead? 
+        #TODO: call external python script instead? 
 
     def handle_thank_you_intent(self, message):
         self.speak_dialog("welcome")
 
-    def handle_how_are_you_intent(self, message):
-        self.speak_dialog("how.are.you")
+    def handle_issue_status_intent(self, message):
+        self.speak("Please identify the issue by issue ID number.")
+        #TODO dialog, gain ID 
+        self.speak("Examining records for latest status on this issue.")
+        #TODO lookup issue and report
 
-    def handle_hello_world_intent(self, message):
-        self.speak_dialog("hello.world")
+    def handle_raise_issue_intent(self, message):
+        self.speak_dialog("human.contact.info")
 
         
 
