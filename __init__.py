@@ -73,7 +73,7 @@ class JIRASkill(MycroftSkill):
         self.register_intent(hello_world_intent,
                              self.handle_hello_world_intent)
 
-        self.server_login(self)
+        self.server_login()
 
 
     # The "handle_xxxx_intent" functions define Mycroft's behavior when
@@ -119,7 +119,7 @@ class JIRASkill(MycroftSkill):
 
 
     # Establish basic login via jira package interface (RESTful API)
-    def server_login():
+    def server_login(self,message):
         try:
             if self.settings.get("url", "") or \
                self.settings.get("username", "") or \
