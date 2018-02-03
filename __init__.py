@@ -73,7 +73,7 @@ class JIRASkill(MycroftSkill):
         self.register_intent(hello_world_intent,
                              self.handle_hello_world_intent)
 
-        server_login(self)
+        self.server_login(self)
 
 
     # The "handle_xxxx_intent" functions define Mycroft's behavior when
@@ -84,7 +84,7 @@ class JIRASkill(MycroftSkill):
     # the method is called.
     def handle_status_report_intent(self, message):
         if self.jira == None:
-            server_login(self)
+            self.server_login(self)
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
