@@ -65,8 +65,11 @@ class JIRASkill(MycroftSkill):
         try:
             #(fallback?)#jira = JIRA(server=os.environ['JIRA_SERVER_URL'],basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD'])) #  http://bakjira01.int.bry.com:8080/rest/api/2/        
             self.jira = JIRA(server=self.settings.get("url", ""),basic_auth=(self.settings.get("username", ""),self.settings.get("password", "")) )
+            LOGGER.info(self.jira.__dict__)
+            LOGGER.info(self.jira)
             #  http://bakjira01.int.bry.com:8080/rest/api/2/
         except Exception as e:
+            LOGGER.error('JIRA Server connection failure!')
             LOGGER.error(e)
 
 
