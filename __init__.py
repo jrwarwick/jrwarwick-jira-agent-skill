@@ -83,10 +83,11 @@ class JIRASkill(MycroftSkill):
     # of a file in the dialog folder, and Mycroft speaks its contents when
     # the method is called.
     def handle_status_report_intent(self, message):
-        if self.jira = None:
+        if self.jira == None:
             server_login(self)
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
+
         self.speak("JIRA Service Desk status report:")
         inquiry = self.jira.search_issues('assignee is EMPTY AND status != Resolved ORDER BY createdDate DESC')
         if inquiry.total < 1:
