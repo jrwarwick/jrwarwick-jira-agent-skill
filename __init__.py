@@ -82,11 +82,13 @@ class JIRASkill(MycroftSkill):
 
         status_report_intent = IntentBuilder("StatusReportIntent").\
             require("StatusReportKeyword").build()
-        self.register_intent(status_report_intent, self.handle_status_report_intent)
+        self.register_intent(status_report_intent, 
+                            self.handle_status_report_intent)
 
         thank_you_intent = IntentBuilder("ThankYouIntent").\
             require("ThankYouKeyword").build()
-        self.register_intent(thank_you_intent, self.handle_thank_you_intent)
+        self.register_intent(thank_you_intent, 
+                            self.handle_thank_you_intent)
 
         issue_status_intent = IntentBuilder("IssueStatusIntent").\
             require("IssueStatusKeyword").build()
@@ -98,7 +100,7 @@ class JIRASkill(MycroftSkill):
         self.register_intent(raise_issue_intent,
                              self.handle_raise_issue_intent)
 
-        server_login(self)
+        server_login()
 
 
     # The "handle_xxxx_intent" functions define Mycroft's behavior when
@@ -109,7 +111,7 @@ class JIRASkill(MycroftSkill):
     # the method is called.
     def handle_status_report_intent(self, message):
         if self.jira == None:
-            server_login(self)
+            server_login()
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
