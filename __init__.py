@@ -39,6 +39,31 @@ __author__ = 'jrwarwick'
 # statements will show up in the command line when running Mycroft.
 LOGGER = getLogger(__name__)
 
+
+# Establish basic login via jira package interface (RESTful API)
+def server_login(self):
+    try:
+        if self.settings.get("url", "") or \
+            self.settings.get("username", "") or \
+            self.settings.get("password", ""):
+                self._is_setup = True
+        else:
+            self.speak("Please navigate to home.mycroft.ai to establish or complete JIRA Service Desk server access configuration.")
+    except Exception as e:
+        LOGGER.error(e)
+    try:
+        #(fallback?)#jira = JIRA(server=os.environ['JIRA_SERVER_URL'],basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD'])) #  http://bakjira01.int.bry.com:8080/rest/api/2/        
+        #TODO: check for rest/api/2 suffix and remove or instruct user to do so.
+        self.jira = JIRA(server=self.settings.get("url", ""),basic_auth=(self.settings.get("username", ""),self.settings.get("password", "")) )
+        LOGGER.info(self.jira.__dict__)
+        LOGGER.info(self.jira)
+        #  http://bakjira01.int.bry.com:8080/rest/api/2/
+    except Exception as e:
+        LOGGER.error('JIRA Server connection failure!')
+        LOGGER.error(e)
+
+
+
 # The logic of each skill is contained within its own class, which inherits
 # base methods from the MycroftSkill class with the syntax you can see below:
 # "class ____Skill(MycroftSkill)"
@@ -73,7 +98,7 @@ class JIRASkill(MycroftSkill):
         self.register_intent(hello_world_intent,
                              self.handle_hello_world_intent)
 
-        self.server_login()
+        server_login(self)
 
 
     # The "handle_xxxx_intent" functions define Mycroft's behavior when
@@ -84,7 +109,7 @@ class JIRASkill(MycroftSkill):
     # the method is called.
     def handle_status_report_intent(self, message):
         if self.jira == None:
-            self.server_login()
+            server_login(self)
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
@@ -117,28 +142,6 @@ class JIRASkill(MycroftSkill):
     def handle_hello_world_intent(self, message):
         self.speak_dialog("hello.world")
 
-
-    # Establish basic login via jira package interface (RESTful API)
-    def server_login(self):
-        try:
-            if self.settings.get("url", "") or \
-               self.settings.get("username", "") or \
-               self.settings.get("password", ""):
-                   self._is_setup = True
-            else:
-                self.speak("Please navigate to home.mycroft.ai to establish or complete JIRA Service Desk server access configuration.")
-        except Exception as e:
-            LOGGER.error(e)
-        try:
-            #(fallback?)#jira = JIRA(server=os.environ['JIRA_SERVER_URL'],basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD'])) #  http://bakjira01.int.bry.com:8080/rest/api/2/        
-            #TODO: check for rest/api/2 suffix and remove or instruct user to do so.
-            self.jira = JIRA(server=self.settings.get("url", ""),basic_auth=(self.settings.get("username", ""),self.settings.get("password", "")) )
-            LOGGER.info(self.jira.__dict__)
-            LOGGER.info(self.jira)
-            #  http://bakjira01.int.bry.com:8080/rest/api/2/
-        except Exception as e:
-            LOGGER.error('JIRA Server connection failure!')
-            LOGGER.error(e)
         
 
     # The "stop" method defines what Mycroft does when told to stop during
