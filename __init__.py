@@ -47,6 +47,7 @@ class JIRASkill(MycroftSkill):
     # The constructor of the skill, which calls MycroftSkill's constructor
     def __init__(self):
         super(JIRASkill, self).__init__(name="JIRASkill")
+        self.jira = None
 
     # This method loads the files needed for the skill's functioning, and
     # creates and registers each intent that the skill uses
