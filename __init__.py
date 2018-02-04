@@ -80,6 +80,8 @@ class JIRASkill(MycroftSkill):
     def initialize(self):
         self.load_data_files(dirname(__file__))
 
+        server_login()
+        
         status_report_intent = IntentBuilder("StatusReportIntent").\
             require("StatusReportKeyword").build()
         self.register_intent(status_report_intent, 
@@ -100,7 +102,6 @@ class JIRASkill(MycroftSkill):
         self.register_intent(raise_issue_intent,
                              self.handle_raise_issue_intent)
 
-        server_login()
 
 
     # The "handle_xxxx_intent" functions define Mycroft's behavior when
@@ -111,7 +112,7 @@ class JIRASkill(MycroftSkill):
     # the method is called.
     def handle_status_report_intent(self, message):
         if self.jira == None:
-            server_login()
+            server_login(self)
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
