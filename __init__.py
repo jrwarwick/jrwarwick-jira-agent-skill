@@ -98,7 +98,7 @@ class JIRASkill(MycroftSkill):
         self.register_intent(raise_issue_intent,
                              self.handle_raise_issue_intent)
 
-        server_login()
+        self.server_login()
 
 
     # The "handle_xxxx_intent" functions define Mycroft's behavior when
