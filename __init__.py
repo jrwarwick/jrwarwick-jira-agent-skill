@@ -109,7 +109,7 @@ class JIRASkill(MycroftSkill):
     # the method is called.
     def handle_status_report_intent(self, message):
         if self.jira == None:
-            server_login()
+            self.server_login()
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
