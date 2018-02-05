@@ -34,6 +34,27 @@
                         "value": ""
                     }
                 ]
+            },		
+            {
+                "name": "Optional Contact Information",
+                "fields": [
+                    {
+			"type": "label",
+			"label": "Human contact information for Mycroft to relay to customers."
+		    },
+                    {
+                        "name": "support_email",
+                        "type": "text",
+                        "label": "Service Desk email address",
+                        "value": "ssupport@domain.tld"
+                    },
+                    {
+                        "name": "support_telephone",
+                        "type": "text",
+                        "label": "Service Desk telephone",
+                        "value": "333-555-1212"
+                    }
+                ]
             }
         ]
     }

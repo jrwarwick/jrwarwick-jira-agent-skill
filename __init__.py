@@ -118,12 +118,14 @@ class JIRASkill(MycroftSkill):
     # the method is called.
     def handle_status_report_intent(self, message):
         if self.jira == None:
+            LOGGER.info( '__' + type(self) + ' :: ' + id(self)
             self.jira = self.server_login()
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
         self.speak("JIRA Service Desk status report:")
-        inquiry = self.jira.search_issues('assignee is EMPTY AND status != Resolved ORDER BY createdDate DESC')
+        inquiry = self.jira.search_issues('assignee is EMPTY AND status != Resolved '
+                                            'ORDER BY createdDate DESC')
         if inquiry.total < 1:
             self.speak( "No JIRA issues found in the unassigned queue." )
         else:
@@ -131,13 +133,16 @@ class JIRASkill(MycroftSkill):
             thissue = self.jira.issue(inquiry[0].key,fields='summary,comment')
             self.speak( "Latest issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary) )
 
-        inquiry = self.jira.search_issues('resolution = Unresolved AND priority > Medium ORDER BY priority DESC')
+        inquiry = self.jira.search_issues('resolution = Unresolved AND priority > Medium '
+                                            'ORDER BY priority DESC')
         if inquiry.total < 1:
             self.speak( "No HIGH priority JIRA issues remain open." )
         else:
-            self.speak( str( inquiry.total ) + " high priority issue" + ('','s')[inquiry.total > 1] + " remain" + ('s','')[inquiry.total > 1] + " open!" )
+            self.speak( str( inquiry.total ) + " high priority issue" + ('','s')[inquiry.total > 1] 
+                        + " remain" + ('s','')[inquiry.total > 1] + " open!" )
             thissue = self.jira.issue(inquiry[0].key,fields='summary,comment')
-            self.speak( "Highest priority issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary) )
+            self.speak( "Highest priority issue is regarding: " 
+                        + re.sub('([fF][wW]:)+','',thissue.fields.summary) )
 
         #TODO: call external python script instead? 
 
@@ -154,13 +159,13 @@ class JIRASkill(MycroftSkill):
         self.speak_dialog("human.contact.info")
 
         
-
     # The "stop" method defines what Mycroft does when told to stop during
     # the skill's execution. In this case, since the skill's functionality
     # is extremely simple, the method just contains the keyword "pass", which
     # does nothing.
     def stop(self):
         pass
+
 
 # The "create_skill()" method is used to create an instance of the skill.
 # Note that it's outside the class itself.
