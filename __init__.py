@@ -58,7 +58,7 @@ class JIRASkill(MycroftSkill):
         new_jira_connection = None
         try:
             #TODO: revisit this. null/none/"" ? 
-            if self.settings.get("url", "") or \   
+            if self.settings.get("url", "") or \
                 self.settings.get("username", "") or \
                 self.settings.get("password", ""):
                     self._is_setup = True
