@@ -39,8 +39,6 @@ __author__ = 'jrwarwick'
 # statements will show up in the command line when running Mycroft.
 LOGGER = getLogger(__name__)
 
-
-
 # The logic of each skill is contained within its own class, which inherits
 # base methods from the MycroftSkill class with the syntax you can see below:
 # "class ____Skill(MycroftSkill)"
@@ -50,7 +48,6 @@ class JIRASkill(MycroftSkill):
     def __init__(self):
         super(JIRASkill, self).__init__(name="JIRASkill")
         self.jira = None
-
 
     # Establish basic login via jira package interface (RESTful API)
     # RETURN the connection object.
@@ -68,10 +65,10 @@ class JIRASkill(MycroftSkill):
         except Exception as e:
             LOGGER.error(e)
         try:
-            #(fallback?)#jira = JIRA(server=os.environ['JIRA_SERVER_URL'],
+            # (fallback?)#jira = JIRA(server=os.environ['JIRA_SERVER_URL'],
             #           basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD'])) 
             #  http://bakjira01.int.bry.com:8080/rest/api/2/        
-            #TODO: check for rest/api/2 suffix and remove or instruct user to do so.
+            # TODO: check for rest/api/2 suffix and remove or instruct user to do so.
             new_jira_connection = JIRA(server=self.settings.get("url", ""),
                     basic_auth=(self.settings.get("username", ""),self.settings.get("password", "")) )
             LOGGER.info(self.jira)
@@ -127,24 +124,24 @@ class JIRASkill(MycroftSkill):
         inquiry = self.jira.search_issues('assignee is EMPTY AND status != Resolved '
                                             'ORDER BY createdDate DESC')
         if inquiry.total < 1:
-            self.speak( "No JIRA issues found in the unassigned queue." )
+            self.speak("No JIRA issues found in the unassigned queue.")
         else:
-            self.speak( str( inquiry.total ) + " issues found in the unassigned queue." )
+            self.speak(str(inquiry.total) + " issues found in the unassigned queue.")
             thissue = self.jira.issue(inquiry[0].key,fields='summary,comment')
-            self.speak( "Latest issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary) )
+            self.speak("Latest issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary))
 
         inquiry = self.jira.search_issues('resolution = Unresolved AND priority > Medium '
                                             'ORDER BY priority DESC')
         if inquiry.total < 1:
-            self.speak( "No HIGH priority JIRA issues remain open." )
+            self.speak("No HIGH priority JIRA issues remain open.")
         else:
-            self.speak( str( inquiry.total ) + " high priority issue" + ('','s')[inquiry.total > 1] 
-                        + " remain" + ('s','')[inquiry.total > 1] + " open!" )
+            self.speak(str(inquiry.total) + " high priority issue" + ('','s')[inquiry.total > 1]
+                        + " remain" + ('s','')[inquiry.total > 1] + " open!")
             thissue = self.jira.issue(inquiry[0].key,fields='summary,comment')
-            self.speak( "Highest priority issue is regarding: " 
-                        + re.sub('([fF][wW]:)+','',thissue.fields.summary) )
+            self.speak("Highest priority issue is regarding: " 
+                        + re.sub('([fF][wW]:)+','',thissue.fields.summary))
 
-        #TODO: call external python script instead? 
+        # TODO: call external python script instead?
 
     def handle_thank_you_intent(self, message):
         self.speak_dialog("welcome")
@@ -158,7 +155,6 @@ class JIRASkill(MycroftSkill):
     def handle_raise_issue_intent(self, message):
         self.speak_dialog("human.contact.info")
 
-        
     # The "stop" method defines what Mycroft does when told to stop during
     # the skill's execution. In this case, since the skill's functionality
     # is extremely simple, the method just contains the keyword "pass", which
