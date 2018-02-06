@@ -44,6 +44,7 @@ LOGGER = getLogger(__name__)
 # "class ____Skill(MycroftSkill)"
 class JIRASkill(MycroftSkill):
 
+
     # The constructor of the skill, which calls MycroftSkill's constructor
     def __init__(self):
         super(JIRASkill, self).__init__(name="JIRASkill")
@@ -54,14 +55,14 @@ class JIRASkill(MycroftSkill):
     def server_login(self):
         new_jira_connection = None
         try:
-            #TODO: revisit this. null/none/"" ? 
+            # TODO: revisit this. null/none/"" ?
             if self.settings.get("url", "") or \
                 self.settings.get("username", "") or \
                 self.settings.get("password", ""):
                     self._is_setup = True
             else:
                 self.speak("Please navigate to home.mycroft.ai to establish or "
-                            "complete JIRA Service Desk server access configuration.")
+                    "complete JIRA Service Desk server access configuration.")
         except Exception as e:
             LOGGER.error(e)
         try:
@@ -78,7 +79,6 @@ class JIRASkill(MycroftSkill):
 
         return new_jira_connection
 
-
     # This method loads the files needed for the skill's functioning, and
     # creates and registers each intent that the skill uses
     def initialize(self):
@@ -87,12 +87,12 @@ class JIRASkill(MycroftSkill):
         status_report_intent = IntentBuilder("StatusReportIntent").\
             require("StatusReportKeyword").build()
         self.register_intent(status_report_intent, 
-                            self.handle_status_report_intent)
+                                self.handle_status_report_intent)
 
         thank_you_intent = IntentBuilder("ThankYouIntent").\
             require("ThankYouKeyword").build()
         self.register_intent(thank_you_intent, 
-                            self.handle_thank_you_intent)
+                                self.handle_thank_you_intent)
 
         issue_status_intent = IntentBuilder("IssueStatusIntent").\
             require("IssueStatusKeyword").build()
@@ -114,26 +114,27 @@ class JIRASkill(MycroftSkill):
     # of a file in the dialog folder, and Mycroft speaks its contents when
     # the method is called.
     def handle_status_report_intent(self, message):
-        if self.jira == None:
-            LOGGER.info( '____' + type(self) + ' :: ' + id(self) )
+        if self.jira is None:
+            LOGGER.info('____' + type(self) + ' :: ' + id(self))
             self.jira = self.server_login()
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
         self.speak("JIRA Service Desk status report:")
         inquiry = self.jira.search_issues('assignee is EMPTY AND '
-                    'status != Resolved '
-                    'ORDER BY createdDate DESC')
+                                            'status != Resolved '
+                                            'ORDER BY createdDate DESC')
         if inquiry.total < 1:
             self.speak("No JIRA issues found in the unassigned queue.")
         else:
             self.speak(str(inquiry.total) + " issues found in the unassigned queue.")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
-            self.speak("Latest issue is regarding: " + re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+            self.speak("Latest issue is regarding: " + 
+                        re.sub('([fF][wW]:)+', '', thissue.fields.summary))
 
         inquiry = self.jira.search_issues('resolution = Unresolved '
-                    'AND priority > Medium '
-                    'ORDER BY priority DESC')
+                                            'AND priority > Medium '
+                                            'ORDER BY priority DESC')
         if inquiry.total < 1:
             self.speak("No HIGH priority JIRA issues remain open.")
         else:
@@ -141,21 +142,27 @@ class JIRASkill(MycroftSkill):
                         " remain" + ('s', '')[inquiry.total > 1] + " open!")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Highest priority issue is regarding: " +
-                        re.sub('([fF][wW]:)+', '' , thissue.fields.summary))
+                        re.sub('([fF][wW]:)+', '', thissue.fields.summary))
 
-        # TODO: call external python script instead?
 
     def handle_thank_you_intent(self, message):
         self.speak_dialog("welcome")
 
     def handle_issue_status_intent(self, message):
         self.speak("Please identify the issue by issue ID number.")
-        #TODO dialog, gain ID 
+        # TODO dialog, gain ID 
         self.speak("Examining records for latest status on this issue.")
-        #TODO lookup issue and report
+        # TODO lookup issue and report
 
     def handle_raise_issue_intent(self, message):
         self.speak_dialog("human.contact.info")
+        # Establish requestor identity
+        # Get brief general description
+        # Get priority
+        # Make a quick search through open (and perhaps very recently closed) issues, 
+        #    is this a duplicate issue?
+        # Create Issue, read out ticket key/ID (also print it out, if printer attached; 
+        #    also IM tech staff, if high priority)
 
     # The "stop" method defines what Mycroft does when told to stop during
     # the skill's execution. In this case, since the skill's functionality
