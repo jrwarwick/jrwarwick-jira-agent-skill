@@ -67,10 +67,10 @@ class JIRASkill(MycroftSkill):
         try:
             # (fallback?)#jira = JIRA(server=os.environ['JIRA_SERVER_URL'],
             #           basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD'])) 
-            #  http://bakjira01.int.bry.com:8080/rest/api/2/        
+            #  http://bakjira01.int.bry.com:8080/rest/api/2/
             # TODO: check for rest/api/2 suffix and remove or instruct user to do so.
             new_jira_connection = JIRA(server=self.settings.get("url", ""),
-                    basic_auth=(self.settings.get("username", ""),self.settings.get("password", "")) )
+                    basic_auth=(self.settings.get("username", ""), self.settings.get("password", "")) )
             LOGGER.info(self.jira)
         except Exception as e:
             LOGGER.error('JIRA Server connection failure!')
@@ -121,25 +121,27 @@ class JIRASkill(MycroftSkill):
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
         self.speak("JIRA Service Desk status report:")
-        inquiry = self.jira.search_issues('assignee is EMPTY AND status != Resolved '
-                                            'ORDER BY createdDate DESC')
+        inquiry = self.jira.search_issues('assignee is EMPTY AND '
+                    'status != Resolved '
+                    'ORDER BY createdDate DESC')
         if inquiry.total < 1:
             self.speak("No JIRA issues found in the unassigned queue.")
         else:
             self.speak(str(inquiry.total) + " issues found in the unassigned queue.")
-            thissue = self.jira.issue(inquiry[0].key,fields='summary,comment')
-            self.speak("Latest issue is regarding: " + re.sub('([fF][wW]:)+','',thissue.fields.summary))
+            thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
+            self.speak("Latest issue is regarding: " + re.sub('([fF][wW]:)+', '', thissue.fields.summary))
 
-        inquiry = self.jira.search_issues('resolution = Unresolved AND priority > Medium '
-                                            'ORDER BY priority DESC')
+        inquiry = self.jira.search_issues('resolution = Unresolved '
+                    'AND priority > Medium '
+                    'ORDER BY priority DESC')
         if inquiry.total < 1:
             self.speak("No HIGH priority JIRA issues remain open.")
         else:
-            self.speak(str(inquiry.total) + " high priority issue" + ('','s')[inquiry.total > 1]
-                        + " remain" + ('s','')[inquiry.total > 1] + " open!")
-            thissue = self.jira.issue(inquiry[0].key,fields='summary,comment')
-            self.speak("Highest priority issue is regarding: " 
-                        + re.sub('([fF][wW]:)+','',thissue.fields.summary))
+            self.speak(str(inquiry.total) + " high priority issue" + ('', 's')[inquiry.total > 1] +
+                        " remain" + ('s', '')[inquiry.total > 1] + " open!")
+            thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
+            self.speak("Highest priority issue is regarding: " +
+                        re.sub('([fF][wW]:)+', '' , thissue.fields.summary))
 
         # TODO: call external python script instead?
 
