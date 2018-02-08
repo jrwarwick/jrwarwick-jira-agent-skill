@@ -143,7 +143,13 @@ class JIRASkill(MycroftSkill):
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Highest priority issue is regarding: " +
                         re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+        # TODO: of these open issues, X are overdue!
 
+
+    # TODO: def handle_how_many_open_issues(self, message):
+    # TODO: def handle_how_many_overdue_issues(self, message):
+    # TODO: def handle_how_many_open_high_priority_issues(self, message):
+    # TODO: def handle_how_many_vip_issues(self, message):
 
     def handle_thank_you_intent(self, message):
         self.speak_dialog("welcome")
