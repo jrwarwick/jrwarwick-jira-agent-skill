@@ -1,7 +1,7 @@
 {
-  "utterance": "How has your day been",
-  "intent_type": "HowAreYouIntent",
+  "utterance": "service desk status report",
+  "intent_type": "StatusReportIntent",
   "intent": {
-    "HowAreYouKeyword": "how has your day been"
+    "StatusReportKeyword": "service desk status report"
   }
 }

@@ -1,7 +1,7 @@
 {
-  "utterance": "How are you doing",
-  "intent_type": "HowAreYouIntent",
+  "utterance": "give me a jira status report",
+  "intent_type": "StatusReportIntent",
   "intent": {
-    "HowAreYouKeyword": "how are you"
+    "HowAreYouKeyword": "JIRA status report"
   }
 }
