@@ -50,6 +50,7 @@ class JIRASkill(MycroftSkill):
     def __init__(self):
         super(JIRASkill, self).__init__(name="JIRASkill")
         self.jira = None
+        self.project_key = None
 
     # Establish basic login via jira package interface (RESTful API)
     # RETURN the connection object.
@@ -88,6 +89,11 @@ class JIRASkill(MycroftSkill):
                                             self.settings.get("password", "")) 
                                 )
             LOGGER.info(self.jira)
+            # Probably a bit sloppy to just take the first project from a list
+            # but this skill is oriented around a single-project Servie Desk
+            # only type install. Caveat Emptor or something.
+            self.project_key = jira.projects()[0].key
+            LOGGER.info("JIRA project key set to '" + self.project_key + "'.")
         except Exception as e:
             LOGGER.error('JIRA Server connection failure!')
             LOGGER.error(e)
@@ -188,9 +194,18 @@ class JIRASkill(MycroftSkill):
         LOGGER.info('Attempted issue_id understanding:  "' + issue_id + '"')
         # TODO dialog, gain ID 
         if isinstance(int(issue_id),int):
-            self.speak("Hmmm... ok... issue " + str(issue_id))
+            self.speak("Hmmm... ok... issue " + 
+                        self.project_key + '-' + str(issue_id))
             self.speak("Examining records for latest status on this issue.")
             # TODO lookup issue and report
+            try:
+                issue = jira.issue(self.project_key + '-' + str(issue_id))
+                self.speak(issue.fields.summary)
+                self.speak(issue.fields.resolution)
+                #last update ...
+            except Exception as e:
+                LOGGER.error('JIRA issue retrieval error!')
+                LOGGER.error(e)
         else:
             self.speak('I am afraid that is not a valid issue id number '
                         'or perhaps I misunderstood.')
