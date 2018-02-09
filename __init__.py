@@ -42,8 +42,9 @@ LOGGER = getLogger(__name__)
 # The logic of each skill is contained within its own class, which inherits
 # base methods from the MycroftSkill class with the syntax you can see below:
 # "class ____Skill(MycroftSkill)"
-class JIRASkill(MycroftSkill):
 
+
+class JIRASkill(MycroftSkill):
 
     # The constructor of the skill, which calls MycroftSkill's constructor
     def __init__(self):
@@ -62,16 +63,28 @@ class JIRASkill(MycroftSkill):
                     self._is_setup = True
             else:
                 self.speak("Please navigate to home.mycroft.ai to establish or "
-                    "complete JIRA Service Desk server access configuration.")
+                           "complete JIRA Service Desk server access configuration.")
         except Exception as e:
             LOGGER.error(e)
         try:
-            # (fallback?)#jira = JIRA(server=os.environ['JIRA_SERVER_URL'],
-            #           basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD'])) 
+            # Would a config fallback be appropriate?
+            #   jira = JIRA(server=os.environ['JIRA_SERVER_URL'],
+            #      basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD']))
             #  http://bakjira01.int.bry.com:8080/rest/api/2/
-            # TODO: check for rest/api/2 suffix and remove or instruct user to do so.
+            # TODO: improve check for rest/api/2 suffix
+            # or instruction user to remove.
+            server_url = self.settings.get("url","").strip()
+            if server_url[-11:] = 'rest/api/2/':
+                self.speak("It seems that you have included the rest api two suffix "
+                           "to the server URL. This will probably fail. "
+                           "Just the base URL is required.")
+                self.speak("Please navigate to home.mycroft.ai to amend "
+                           "the JIRA Service Desk server access configuration.")
+
             new_jira_connection = JIRA(server=self.settings.get("url", ""),
-                    basic_auth=(self.settings.get("username", ""), self.settings.get("password", "")) )
+                                basic_auth=(self.settings.get("username", ""), 
+                                            self.settings.get("password", "")) 
+                                )
             LOGGER.info(self.jira)
         except Exception as e:
             LOGGER.error('JIRA Server connection failure!')
@@ -87,12 +100,12 @@ class JIRASkill(MycroftSkill):
         status_report_intent = IntentBuilder("StatusReportIntent").\
             require("StatusReportKeyword").build()
         self.register_intent(status_report_intent, 
-                                self.handle_status_report_intent)
+                             self.handle_status_report_intent)
 
         thank_you_intent = IntentBuilder("ThankYouIntent").\
             require("ThankYouKeyword").build()
         self.register_intent(thank_you_intent, 
-                                self.handle_thank_you_intent)
+                             self.handle_thank_you_intent)
 
         issue_status_intent = IntentBuilder("IssueStatusIntent").\
             require("IssueStatusKeyword").build()
@@ -122,28 +135,40 @@ class JIRASkill(MycroftSkill):
 
         self.speak("JIRA Service Desk status report:")
         inquiry = self.jira.search_issues('assignee is EMPTY AND '
-                                            'status != Resolved '
-                                            'ORDER BY createdDate DESC')
+                                          'status != Resolved '
+                                          'ORDER BY createdDate DESC')
         if inquiry.total < 1:
             self.speak("No JIRA issues found in the unassigned queue.")
         else:
-            self.speak(str(inquiry.total) + " issues found in the unassigned queue.")
+            self.speak(str(inquiry.total) + " issue" + ('', 's')[inquiry.total > 1] +
+                       " found in the unassigned queue.")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
-            self.speak("Latest issue is regarding: " + 
-                        re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+            self.speak("Latest issue is regarding: " +
+                       re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+
+        inquiry = self.jira.search_issues('status != Resolved AND '
+                                          'duedate < now() '
+                                          'ORDER BY duedate')
+        if inquiry.total < 1:
+            self.speak("No overdue issues.")
+        else:
+            self.speak(str(inquiry.total) + " issue" + ('', 's')[inquiry.total > 1] +
+                       " overdue!")
+            thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
+            self.speak("Most overdue issue is regarding: " +
+                       re.sub('([fF][wW]:)+', '', thissue.fields.summary))
 
         inquiry = self.jira.search_issues('resolution = Unresolved '
-                                            'AND priority > Medium '
-                                            'ORDER BY priority DESC')
+                                          'AND priority > Medium '
+                                          'ORDER BY priority DESC')
         if inquiry.total < 1:
             self.speak("No HIGH priority JIRA issues remain open.")
         else:
             self.speak(str(inquiry.total) + " high priority issue" + ('', 's')[inquiry.total > 1] +
-                        " remain" + ('s', '')[inquiry.total > 1] + " open!")
+                       " remain" + ('s', '')[inquiry.total > 1] + " open!")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Highest priority issue is regarding: " +
-                        re.sub('([fF][wW]:)+', '', thissue.fields.summary))
-
+                       re.sub('([fF][wW]:)+', '', thissue.fields.summary))
 
     def handle_thank_you_intent(self, message):
         self.speak_dialog("welcome")
@@ -159,9 +184,9 @@ class JIRASkill(MycroftSkill):
         # Establish requestor identity
         # Get brief general description
         # Get priority
-        # Make a quick search through open (and perhaps very recently closed) issues, 
+        # Make a quick search through open (and perhaps very recently closed) issues,
         #    is this a duplicate issue?
-        # Create Issue, read out ticket key/ID (also print it out, if printer attached; 
+        # Create Issue, read out ticket key/ID (also print it out, if printer attached;
         #    also IM tech staff, if high priority)
 
     # The "stop" method defines what Mycroft does when told to stop during
