@@ -176,15 +176,21 @@ class JIRASkill(MycroftSkill):
     # TODO: def handle_how_many_overdue_issues(self, message):
     # TODO: def handle_how_many_open_high_priority_issues(self, message):
     # TODO: def handle_how_many_vip_issues(self, message):
+    # TODO: def handle_most_urgent_issue(self, message):
 
     def handle_thank_you_intent(self, message):
         self.speak_dialog("welcome")
 
     def handle_issue_status_intent(self, message):
-        self.speak("Please identify the issue by issue ID number.")
+        issue_id = self.get_response('specify.issue.dialog')
         # TODO dialog, gain ID 
-        self.speak("Examining records for latest status on this issue.")
-        # TODO lookup issue and report
+        if isinstance(issue_id,int):
+            self.speak("Hmmm... ok... issue " + issue_id)
+            self.speak("Examining records for latest status on this issue.")
+            # TODO lookup issue and report
+        else:
+            self.speak('I am afraid that is not a valid issue id number '
+                        'or perhaps I misunderstood.')
 
     def handle_raise_issue_intent(self, message):
         self.speak_dialog("human.contact.info")
