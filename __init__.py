@@ -62,6 +62,8 @@ class JIRASkill(MycroftSkill):
                 self.settings.get("password", ""):
                     self._is_setup = True
             else:
+                # There appears to be a planned, but so far only stub for this
+                # get_intro_message(self)   in docs. So, TODO-one-day?
                 self.speak("Please navigate to home.mycroft.ai to establish or "
                            "complete JIRA Service Desk server access configuration.")
         except Exception as e:
@@ -185,7 +187,7 @@ class JIRASkill(MycroftSkill):
         issue_id = self.get_response('specify.issue')
         # TODO dialog, gain ID 
         if isinstance(issue_id,int):
-            self.speak("Hmmm... ok... issue " + issue_id)
+            self.speak("Hmmm... ok... issue " + str(issue_id))
             self.speak("Examining records for latest status on this issue.")
             # TODO lookup issue and report
         else:
@@ -193,7 +195,10 @@ class JIRASkill(MycroftSkill):
                         'or perhaps I misunderstood.')
 
     def handle_raise_issue_intent(self, message):
-        self.speak_dialog("human.contact.info")
+        # TODO: pull from settings, but also have some kind of fallback, else.
+        data = {'telephone_number':'333-333-4444',
+                'email_address':'support@gooby.com'}
+        self.speak_dialog("human.contact.info",data)
         # Establish requestor identity
         # Get brief general description
         # Get priority
