@@ -184,9 +184,10 @@ class JIRASkill(MycroftSkill):
         self.speak_dialog("welcome")
 
     def handle_issue_status_intent(self, message):
-        issue_id = int(re.sub(r'\s+', '', self.get_response('specify.issue')))
+        issue_id = re.sub(r'\s+', '', self.get_response('specify.issue'))
+        LOGGER.info('Attempted issue_id understanding:  "' + issue_id + '"')
         # TODO dialog, gain ID 
-        if isinstance(issue_id,int):
+        if isinstance(int(issue_id),int):
             self.speak("Hmmm... ok... issue " + str(issue_id))
             self.speak("Examining records for latest status on this issue.")
             # TODO lookup issue and report
