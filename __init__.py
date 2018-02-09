@@ -74,7 +74,7 @@ class JIRASkill(MycroftSkill):
             # TODO: improve check for rest/api/2 suffix
             # or instruction user to remove.
             server_url = self.settings.get("url","").strip()
-            if server_url[-11:] = 'rest/api/2/':
+            if server_url[-11:] == 'rest/api/2/':
                 self.speak("It seems that you have included the rest api two suffix "
                            "to the server URL. This will probably fail. "
                            "Just the base URL is required.")
