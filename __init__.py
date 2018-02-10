@@ -95,7 +95,7 @@ class JIRASkill(MycroftSkill):
             # but this skill is oriented around a single-project Servie Desk
             # only type install. Caveat Emptor or something.
             LOGGER.debug("--SELF reveal: " + str(type(self)) + " | " + str(id(self)) + "  |  " + str(self.__dict__.keys()) )
-            self.project_key = jira.projects()[0].key
+            self.project_key = new_jira_connection.projects()[0].key
             LOGGER.info("JIRA project key set to '" + self.project_key + "'.")
         except Exception as e:
             LOGGER.error('JIRA Server connection failure!')
