@@ -79,6 +79,9 @@ class JIRASkill(MycroftSkill):
             #  http://bakjira01.int.bry.com:8080/rest/api/2/
             # TODO: improve check for rest/api/2 suffix
             # or instruction user to remove.
+            # Or actually, is it smarter to require user to give fullpath
+            # to rest endpoint? If backwards compatible this makes the skill
+            # less brittle.
             server_url = self.settings.get("url", "").strip()
             if server_url[-11:] == 'rest/api/2/':
                 self.speak("It seems that you have included the rest api two suffix "
@@ -127,6 +130,11 @@ class JIRASkill(MycroftSkill):
             require("RaiseIssueKeyword").build()
         self.register_intent(raise_issue_intent,
                              self.handle_raise_issue_intent)
+
+        contac_info_intent = IntentBuilder("ContactInfoIntent").\
+            require("ContactInfoKeyword").build()
+        self.register_intent(contact_info_intent,
+                             self.handle_contact_info_intent)
 
         self.jira = self.server_login()
 
@@ -214,6 +222,8 @@ class JIRASkill(MycroftSkill):
 
     def handle_raise_issue_intent(self, message):
         # TODO: pull from settings, but also have some kind of fallback, else.
+        self.speak('Unfortunately, I do not yet have the ability to file ' +
+                   'an issue record by myself.')
         telephone_number = self.settings.get("support_telephone", "")
         # TODO check and fallback on telephone number
         data = {'telephone_number': telephone_number, 
@@ -237,6 +247,22 @@ class JIRASkill(MycroftSkill):
         # Create Issue, read out ticket key/ID (also print it out, 
         # if printer attached;
         #    also IM tech staff, if high priority)
+
+    def handle_contact_info_intent(self, message):
+        telephone_number = self.settings.get("support_telephone", "")
+        # TODO check and fallback on telephone number
+        data = {'telephone_number': telephone_number, 
+                'email_address': self.settings.get("support_email", "")}
+        self.speak_dialog("human.contact.info", data)
+
+        self.enclosure.deactivate_mouth_events()
+        self.enclosure.mouth_text(telephone_number)
+        time.sleep((self.LETTERS_PER_SCREEN + len(telephone_number)) *
+                   self.SEC_PER_LETTER)
+        mycroft.audio.wait_while_speaking()
+        self.enclosure.activate_mouth_events()
+        self.enclosure.mouth_reset()
+        
 
     # The "stop" method defines what Mycroft does when told to stop during
     # the skill's execution. In this case, since the skill's functionality
