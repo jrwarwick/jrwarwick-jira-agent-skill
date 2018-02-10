@@ -94,17 +94,21 @@ class JIRASkill(MycroftSkill):
                                     basic_auth=(self.settings.get("username", ""),
                                                 self.settings.get("password", ""))
                                     )
-            # Probably a bit sloppy to just take the first project from a list
-            # but this skill is oriented around a single-project Servie Desk
-            # only type install. Caveat Emptor or something.
-            LOGGER.debug("--SELF reveal: " + str(type(self)) + " | " + str(id(self)) + "  |  " + str(self.__dict__.keys()) )
-            self.project_key = new_jira_connection.projects()[0].key
-            LOGGER.info("JIRA project key set to '" + self.project_key + "'.")
         except Exception as e:
             LOGGER.error('JIRA Server connection failure!')
             LOGGER.error(e)
 
         return new_jira_connection
+
+    # Determine project key (prefix to issue IDs)
+    # RETURN string which is project key
+    def get_jira_project(self):
+            # Probably a bit sloppy to just take the first project from a list
+            # but this skill is oriented around a single-project Servie Desk
+            # only type install. Caveat Emptor or something.
+            # LOGGER.debug("--SELF reveal: " + str(type(self)) + " | " +
+            #             str(id(self)) + "  |  " + str(self.__dict__.keys()) )
+            return self.jira.projects()[0].key
 
     # This method loads the files needed for the skill's functioning, and
     # creates and registers each intent that the skill uses
@@ -137,6 +141,9 @@ class JIRASkill(MycroftSkill):
                              self.handle_contact_info_intent)
 
         self.jira = self.server_login()
+        self.project_key = self.get_jira_project()
+        LOGGER.info("JIRA project key set to '" + self.project_key + "'.")
+
 
     # The "handle_xxxx_intent" functions define Mycroft's behavior when
     # each of the skill's intents is triggered: in this case, he simply
@@ -188,6 +195,7 @@ class JIRASkill(MycroftSkill):
             self.speak("Highest priority issue is regarding: " +
                        re.sub('([fF][wW]:)+', '', thissue.fields.summary))
         # TODO: of these open issues, X are overdue!
+        # TODO: SLAs breached or nearly so, if you have that sort of thing.
 
 
     # TODO: def handle_how_many_open_issues(self, message):
@@ -263,7 +271,6 @@ class JIRASkill(MycroftSkill):
         self.enclosure.activate_mouth_events()
         self.enclosure.mouth_reset()
         
-
     # The "stop" method defines what Mycroft does when told to stop during
     # the skill's execution. In this case, since the skill's functionality
     # is extremely simple, the method just contains the keyword "pass", which
