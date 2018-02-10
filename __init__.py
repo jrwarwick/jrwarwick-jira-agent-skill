@@ -88,10 +88,10 @@ class JIRASkill(MycroftSkill):
                                 basic_auth=(self.settings.get("username", ""), 
                                             self.settings.get("password", "")) 
                                 )
-            LOGGER.info(self.jira)
             # Probably a bit sloppy to just take the first project from a list
             # but this skill is oriented around a single-project Servie Desk
             # only type install. Caveat Emptor or something.
+            LOGGER.debug("--SELF reveal: " + self + "  |  " + self.__dict.keys() )
             self.project_key = jira.projects()[0].key
             LOGGER.info("JIRA project key set to '" + self.project_key + "'.")
         except Exception as e:
@@ -212,8 +212,8 @@ class JIRASkill(MycroftSkill):
 
     def handle_raise_issue_intent(self, message):
         # TODO: pull from settings, but also have some kind of fallback, else.
-        data = {'telephone_number':'333-333-4444',
-                'email_address':'support@gooby.com'}
+        data = {'telephone_number': self.settings.get("support_telephone", ""), 
+                'email_address': self.settings.get("support_email", "")}
         self.speak_dialog("human.contact.info",data)
         # Establish requestor identity
         # Get brief general description
