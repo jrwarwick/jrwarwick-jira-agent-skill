@@ -79,7 +79,7 @@ class JIRASkill(MycroftSkill):
             #  http://bakjira01.int.bry.com:8080/rest/api/2/
             # TODO: improve check for rest/api/2 suffix
             # or instruction user to remove.
-            server_url = self.settings.get("url","").strip()
+            server_url = self.settings.get("url", "").strip()
             if server_url[-11:] == 'rest/api/2/':
                 self.speak("It seems that you have included the rest api two suffix "
                            "to the server URL. This will probably fail. "
@@ -88,9 +88,9 @@ class JIRASkill(MycroftSkill):
                            "the JIRA Service Desk server access configuration.")
 
             new_jira_connection = JIRA(server=self.settings.get("url", ""),
-                                basic_auth=(self.settings.get("username", ""), 
-                                            self.settings.get("password", "")) 
-                                )
+                                    basic_auth=(self.settings.get("username", ""),
+                                                self.settings.get("password", ""))
+                                    )
             # Probably a bit sloppy to just take the first project from a list
             # but this skill is oriented around a single-project Servie Desk
             # only type install. Caveat Emptor or something.
@@ -129,7 +129,6 @@ class JIRASkill(MycroftSkill):
                              self.handle_raise_issue_intent)
 
         self.jira = self.server_login()
-
 
     # The "handle_xxxx_intent" functions define Mycroft's behavior when
     # each of the skill's intents is triggered: in this case, he simply
@@ -179,7 +178,7 @@ class JIRASkill(MycroftSkill):
                        " remain" + ('s', '')[inquiry.total > 1] + " open!")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Highest priority issue is regarding: " +
-                        re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+                       re.sub('([fF][wW]:)+', '', thissue.fields.summary))
         # TODO: of these open issues, X are overdue!
 
 
@@ -196,22 +195,22 @@ class JIRASkill(MycroftSkill):
         issue_id = re.sub(r'\s+', '', self.get_response('specify.issue'))
         LOGGER.info('Attempted issue_id understanding:  "' + issue_id + '"')
         # TODO dialog, gain ID 
-        if isinstance(int(issue_id),int):
+        if isinstance(int(issue_id), int):
             self.speak("Hmmm... ok... issue " + 
-                        self.project_key + '-' + str(issue_id))
+                       self.project_key + '-' + str(issue_id))
             self.speak("Examining records for latest status on this issue.")
             # TODO lookup issue and report
             try:
                 issue = jira.issue(self.project_key + '-' + str(issue_id))
                 self.speak(issue.fields.summary)
                 self.speak(issue.fields.resolution)
-                #last update ...
+                # last update ...
             except Exception as e:
                 LOGGER.error('JIRA issue retrieval error!')
                 LOGGER.error(e)
         else:
             self.speak('I am afraid that is not a valid issue id number '
-                        'or perhaps I misunderstood.')
+                       'or perhaps I misunderstood.')
 
     def handle_raise_issue_intent(self, message):
         # TODO: pull from settings, but also have some kind of fallback, else.
@@ -219,12 +218,12 @@ class JIRASkill(MycroftSkill):
         # TODO check and fallback on telephone number
         data = {'telephone_number': telephone_number, 
                 'email_address': self.settings.get("support_email", "")}
-        self.speak_dialog("human.contact.info",data)
+        self.speak_dialog("human.contact.info", data)
 
         self.enclosure.deactivate_mouth_events()
         self.enclosure.mouth_text(telephone_number)
         time.sleep((self.LETTERS_PER_SCREEN + len(telephone_number)) *
-                       self.SEC_PER_LETTER)
+                   self.SEC_PER_LETTER)
         mycroft.audio.wait_while_speaking()
         self.enclosure.activate_mouth_events()
         self.enclosure.mouth_reset()
@@ -232,9 +231,11 @@ class JIRASkill(MycroftSkill):
         # Establish requestor identity
         # Get brief general description
         # Get priority
-        # Make a quick search through open (and perhaps very recently closed) issues,
+        # Make a quick search through open 
+        # (and perhaps very recently closed) issues,
         #    is this a duplicate issue?
-        # Create Issue, read out ticket key/ID (also print it out, if printer attached;
+        # Create Issue, read out ticket key/ID (also print it out, 
+        # if printer attached;
         #    also IM tech staff, if high priority)
 
     # The "stop" method defines what Mycroft does when told to stop during
