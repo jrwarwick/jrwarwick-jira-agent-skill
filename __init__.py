@@ -45,6 +45,9 @@ LOGGER = getLogger(__name__)
 
 
 class JIRASkill(MycroftSkill):
+    # Constants from the core IP skill
+    SEC_PER_LETTER = 0.65  # timing based on Mark 1 screen 
+    LETTERS_PER_SCREEN = 9.0
 
     # The constructor of the skill, which calls MycroftSkill's constructor
     def __init__(self):
@@ -212,9 +215,20 @@ class JIRASkill(MycroftSkill):
 
     def handle_raise_issue_intent(self, message):
         # TODO: pull from settings, but also have some kind of fallback, else.
-        data = {'telephone_number': self.settings.get("support_telephone", ""), 
+        telephone_number = self.settings.get("support_telephone", "")
+        # TODO check and fallback on telephone number
+        data = {'telephone_number': telephone_number, 
                 'email_address': self.settings.get("support_email", "")}
         self.speak_dialog("human.contact.info",data)
+
+        self.enclosure.deactivate_mouth_events()
+        self.enclosure.mouth_text(telephone_number)
+        time.sleep((self.LETTERS_PER_SCREEN + len(telephone_number)) *
+                       self.SEC_PER_LETTER)
+        mycroft.audio.wait_while_speaking()
+        self.enclosure.activate_mouth_events()
+        self.enclosure.mouth_reset()
+
         # Establish requestor identity
         # Get brief general description
         # Get priority
