@@ -94,7 +94,7 @@ class JIRASkill(MycroftSkill):
             # Probably a bit sloppy to just take the first project from a list
             # but this skill is oriented around a single-project Servie Desk
             # only type install. Caveat Emptor or something.
-            LOGGER.debug("--SELF reveal: " + str(type(self)) + " | " + str(id(self)) + "  |  " + self.__dict.keys() )
+            LOGGER.debug("--SELF reveal: " + str(type(self)) + " | " + str(id(self)) + "  |  " + self.__dict__.keys() )
             self.project_key = jira.projects()[0].key
             LOGGER.info("JIRA project key set to '" + self.project_key + "'.")
         except Exception as e:
