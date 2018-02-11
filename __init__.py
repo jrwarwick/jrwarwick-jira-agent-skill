@@ -32,6 +32,7 @@ from mycroft.util.log import getLogger
 from jira import JIRA
 import os
 import re
+import time
 
 __author__ = 'jrwarwick'
 
