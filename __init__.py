@@ -238,8 +238,14 @@ class JIRASkill(MycroftSkill):
             try:
                 issue = self.jira.issue(self.project_key + '-' + str(issue_id))
                 self.speak(issue.fields.summary)
-                self.speak(issue.fields.resolution)
+                if issue.fields.resolution == None:
+                    self.speak(" is not yet resolved.")
+                    self.speak("Issue is at " + issue.fields.priority.name + " priority.")
+                else:
+                    self.speak(issue.fields.resolution.description)
                 # last update ...
+                # overdue check
+                # assignment check
             except Exception as e:
                 LOGGER.error('JIRA issue retrieval error!')
                 LOGGER.error(e)
