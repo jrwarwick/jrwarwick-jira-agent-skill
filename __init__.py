@@ -218,7 +218,7 @@ class JIRASkill(MycroftSkill):
 
         def issue_id_validator(utterance):
             #Confesion: "20 characters" is an arbitrary max in this re
-            return re.match(r'^[\s0-9]{1,20}$', '', utterance)
+            return re.match(r'^[\s0-9]{1,20}$', utterance)
 
         def valid_issue_id_desc(utterance):
             return ('A valid issue ID is an integer number, '
