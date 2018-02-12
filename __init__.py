@@ -211,7 +211,23 @@ class JIRASkill(MycroftSkill):
         self.speak_dialog("welcome")
 
     def handle_issue_status_intent(self, message):
-        issue_id = re.sub(r'\s+', '', self.get_response('specify.issue'))
+        # TODO: flexibly, and somewhat reliably  detect if user
+        # uttered the project name abbrev. prefix and just deal with it.
+
+        #issue_id = re.sub(r'\s+', '', self.get_response('specify.issue'))
+
+        def issue_id_validator(utterance):
+            #Confesion: "20 characters" is an arbitrary max in this re
+            return re.match(r'^[\s0-9]{1,20}$', '', utterance)
+
+        def valid_issue_id_desc(utterance):
+            return 'A valid issue ID is an integer number, '
+                   'I will prefix it with project name abbreviation.'
+                   'Let me try again.'
+
+        issue_id = self.get_response(dialog='specify.issue', validator=issue_id_validator, 
+                                     on_fail=valid_issue_id_desc, num_retries=3 )
+        issue_id = re.sub(r'\s+', '', issue_id)
         LOGGER.info('Attempted issue_id understanding:  "' + issue_id + '"')
         # TODO dialog, gain ID 
         if isinstance(int(issue_id), int):
@@ -220,7 +236,7 @@ class JIRASkill(MycroftSkill):
             self.speak("Examining records for latest status on this issue.")
             # TODO lookup issue and report
             try:
-                issue = jira.issue(self.project_key + '-' + str(issue_id))
+                issue = self.jira.issue(self.project_key + '-' + str(issue_id))
                 self.speak(issue.fields.summary)
                 self.speak(issue.fields.resolution)
                 # last update ...
