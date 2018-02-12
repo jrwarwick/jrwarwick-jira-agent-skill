@@ -28,6 +28,7 @@ from os.path import dirname
 from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
 from mycroft.util.log import getLogger
+import mycroft.audio
 
 from jira import JIRA
 import os
@@ -47,7 +48,7 @@ LOGGER = getLogger(__name__)
 
 class JIRASkill(MycroftSkill):
     # Constants from the core IP skill
-    SEC_PER_LETTER = 0.65  # timing based on Mark 1 screen 
+    SEC_PER_LETTER = 0.65  # timing based on Mark 1 screen
     LETTERS_PER_SCREEN = 9.0
 
     # The constructor of the skill, which calls MycroftSkill's constructor
