@@ -221,9 +221,9 @@ class JIRASkill(MycroftSkill):
             return re.match(r'^[\s0-9]{1,20}$', '', utterance)
 
         def valid_issue_id_desc(utterance):
-            return 'A valid issue ID is an integer number, '
+            return ('A valid issue ID is an integer number, '
                    'I will prefix it with project name abbreviation.'
-                   'Let me try again.'
+                   'Let me try again.')
 
         issue_id = self.get_response(dialog='specify.issue', validator=issue_id_validator, 
                                      on_fail=valid_issue_id_desc, num_retries=3 )
