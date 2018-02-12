@@ -138,7 +138,7 @@ class JIRASkill(MycroftSkill):
         self.register_intent(raise_issue_intent,
                              self.handle_raise_issue_intent)
 
-        contac_info_intent = IntentBuilder("ContactInfoIntent").\
+        contact_info_intent = IntentBuilder("ContactInfoIntent").\
             require("ContactInfoKeyword").build()
         self.register_intent(contact_info_intent,
                              self.handle_contact_info_intent)
