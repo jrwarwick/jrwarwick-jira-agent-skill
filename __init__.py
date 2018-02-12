@@ -29,6 +29,7 @@ from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
 from mycroft.util.log import getLogger
 import mycroft.audio
+import mycroft.util
 
 from jira import JIRA
 import os
