@@ -231,22 +231,24 @@ class JIRASkill(MycroftSkill):
         LOGGER.info('Attempted issue_id understanding:  "' + issue_id + '"')
         # TODO dialog, gain ID 
         if isinstance(int(issue_id), int):
-            self.speak("Hmmm... ok... issue " + 
+            self.speak("Searching for issue " + 
                        self.project_key + '-' + str(issue_id))
-            self.speak("Examining records for latest status on this issue.")
-            # TODO lookup issue and report
             try:
                 issue = self.jira.issue(self.project_key + '-' + str(issue_id))
                 self.speak(issue.fields.summary)
                 if issue.fields.resolution == None:
                     self.speak(" is not yet resolved.")
+                    self.speak("Record last updated " + issue.fields.updated)
                     self.speak("Issue is at " + issue.fields.priority.name + " priority.")
+                    # overdue check
+                    # assignment check (to a technician)
+                    # linked/related issues check. At least 'duplicates'
                 else:
                     self.speak(issue.fields.resolution.description)
-                # last update ...
-                # overdue check
-                # assignment check
+                    self.speak("Resolution reached on " + issue.resolutiondate)
+                    # TODO: date math for " x days ago"
             except Exception as e:
+                self.speak("Search for the issue record failed. Sorry.")
                 LOGGER.error('JIRA issue retrieval error!')
                 LOGGER.error(e)
         else:
