@@ -31,6 +31,8 @@ Required configuration variables (from settings interface on home.mycroft.ai):
 
 ## Credits 
 Justin Warwick
+
 https://github.com/MycroftAI		https://mycroft.ai/
+
 https://github.com/pycontribs/jira	https://pypi.python.org/pypi/jira/
 

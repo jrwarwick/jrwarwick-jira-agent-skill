@@ -221,8 +221,9 @@ class JIRASkill(MycroftSkill):
             return re.match(r'^[\s0-9]{1,20}$', utterance)
 
         def valid_issue_id_desc(utterance):
-            return ('A valid issue ID is an integer number, '
-                    'I will prefix it with project name abbreviation.'
+            return ('A valid issue ID is an integer number. '
+                    'No prefix, if you please. '
+                    'I will prefix the ID with JIRA project name abbreviation.'
                     'Let me try again.')
 
         issue_id = self.get_response(dialog='specify.issue', validator=issue_id_validator, 
@@ -236,12 +237,13 @@ class JIRASkill(MycroftSkill):
             try:
                 issue = self.jira.issue(self.project_key + '-' + str(issue_id))
                 self.speak(issue.fields.summary)
-                if issue.fields.resolution == None:
+                if issue.fields.resolution is None:
                     self.speak(" is not yet resolved.")
                     self.speak("Record last updated " + issue.fields.updated)
                     self.speak("Issue is at " + issue.fields.priority.name + " priority.")
-                    # overdue check
-                    # assignment check (to a technician)
+                    if issue.fields.assignee is None:
+                        self.speak('And the issue has not yet been assigned to a staff person.')
+                     overdue check
                     # linked/related issues check. At least 'duplicates'
                 else:
                     self.speak(issue.fields.resolution.description)
