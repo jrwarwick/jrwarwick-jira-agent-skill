@@ -240,6 +240,18 @@ class JIRASkill(MycroftSkill):
                 self.speak(issue.fields.summary)
                 if issue.fields.resolution is None:
                     self.speak(" is not yet resolved.")
+                    if issue.fields.duedate is not None:
+                        then = dateutil.parser.parse(issue.fields.duedate)
+                        ago = datetime.datetime.now(then.tzinfo) - then
+                        cronproximate = ''
+                        if ago.days < 0:
+                            if ago.days > -3:
+                                self.speak("This issue is due very soon.")
+                        elif ago.days == 0:
+                            self.speak("This issue is due today!")
+                        elif ago.days > 0:
+                            cronproximate = str(ago.days) + ' days.'
+                            self.speak("This issue is overdue by " + cronproximate)
                     if issue.fields.updated is None:
                         self.speak('No recorded progress on this issue, yet.')
                     else:
@@ -251,7 +263,7 @@ class JIRASkill(MycroftSkill):
                             cronproximate = 'today.'
                             # TODO: a bit with less than 60 minutes (3600 sec) is VERY RECENT
                         else:
-                            cronproximate = str(ago.days) + 'days ago.'
+                            cronproximate = str(ago.days) + ' days ago.'
                         self.speak("Record last updated " + cronproximate)
                     self.speak("Issue is at " + issue.fields.priority.name + " priority.")
                     if issue.fields.assignee is None:
