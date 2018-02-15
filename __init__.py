@@ -35,6 +35,7 @@ from jira import JIRA
 import os
 import re
 import time
+import dateutil.parser
 
 __author__ = 'jrwarwick'
 
@@ -239,11 +240,20 @@ class JIRASkill(MycroftSkill):
                 self.speak(issue.fields.summary)
                 if issue.fields.resolution is None:
                     self.speak(" is not yet resolved.")
-                    self.speak("Record last updated " + issue.fields.updated)
+                    then = dateutil.parser.parse(issue.fields.updated)
+                    ago = datetime.datetime.now(then.tzinfo) - then
+                    cronproximate = ''
+                    if ago.days == 0:
+                        # TODO: a bit about crossing day boundaries if 22 hours etc ago
+                        cronproximate = 'today.'
+                        # TODO: a bit with less than 60 minutes (3600 sec) is VERY RECENT
+                    else:
+                        cronproximate = str(ago.days) + 'days ago.'
+                    self.speak("Record last updated " + cronproximate)
                     self.speak("Issue is at " + issue.fields.priority.name + " priority.")
                     if issue.fields.assignee is None:
                         self.speak('And the issue has not yet been assigned to a staff person.')
-                     overdue check
+                    # overdue check
                     # linked/related issues check. At least 'duplicates'
                 else:
                     self.speak(issue.fields.resolution.description)
