@@ -242,6 +242,8 @@ class JIRASkill(MycroftSkill):
                     self.speak(" is not yet resolved.")
                     if issue.fields.duedate is not None:
                         then = dateutil.parser.parse(issue.fields.duedate)
+                        if then.tzinfo is None:
+                            then = datetime.datetime(then.year,then.month,then.day,tzinfo=tzlocal())
                         ago = datetime.datetime.now(then.tzinfo) - then
                         cronproximate = ''
                         if ago.days < 0:
@@ -256,6 +258,8 @@ class JIRASkill(MycroftSkill):
                         self.speak('No recorded progress on this issue, yet.')
                     else:
                         then = dateutil.parser.parse(issue.fields.updated)
+                        if then.tzinfo is None:
+                            then = datetime.datetime(then.year,then.month,then.day,tzinfo=tzlocal())
                         ago = datetime.datetime.now(then.tzinfo) - then
                         cronproximate = ''
                         if ago.days == 0:
@@ -288,8 +292,13 @@ class JIRASkill(MycroftSkill):
                    'an issue record by myself.')
         telephone_number = self.settings.get("support_telephone", "")
         # TODO check and fallback on telephone number
+
+        email_address = ' '.join(list(self.settings.get("support_email", "")))
+        email_address = email_address.replace('.','dot')
+        # TODO: once the core pronounce_email method is available,
+        # replace this naive spell-out approach
         data = {'telephone_number': telephone_number, 
-                'email_address': self.settings.get("support_email", "")}
+                'email_address': email_address}
         self.speak_dialog("human.contact.info", data)
 
         self.enclosure.deactivate_mouth_events()
