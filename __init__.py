@@ -135,12 +135,14 @@ class JIRASkill(MycroftSkill):
                              self.handle_issue_status_intent)
 
         raise_issue_intent = IntentBuilder("RaiseIssueIntent").\
-            require("RaiseIssueKeyword").build()
+            require("RaiseKeyword").require("IssueRecordKeyword").\
+            build()
         self.register_intent(raise_issue_intent,
                              self.handle_raise_issue_intent)
 
         contact_info_intent = IntentBuilder("ContactInfoIntent").\
-            require("ContactInfoKeyword").build()
+            require("ContactKeyword").require("ServiceDeskStaffKeyword").\
+            build()
         self.register_intent(contact_info_intent,
                              self.handle_contact_info_intent)
 
