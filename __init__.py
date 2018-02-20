@@ -125,11 +125,6 @@ class JIRASkill(MycroftSkill):
         self.register_intent(status_report_intent, 
                              self.handle_status_report_intent)
 
-        thank_you_intent = IntentBuilder("ThankYouIntent").\
-            require("ThankYouKeyword").build()
-        self.register_intent(thank_you_intent, 
-                             self.handle_thank_you_intent)
-
         issue_status_intent = IntentBuilder("IssueStatusIntent").\
             require("IssueStatusKeyword").build()
         self.register_intent(issue_status_intent,
@@ -201,7 +196,6 @@ class JIRASkill(MycroftSkill):
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Highest priority issue is regarding: " +
                        re.sub('([fF][wW]:)+', '', thissue.fields.summary))
-        # TODO: of these open issues, X are overdue!
         # TODO: SLAs breached or nearly so, if you have that sort of thing.
 
 
@@ -210,9 +204,6 @@ class JIRASkill(MycroftSkill):
     # TODO: def handle_how_many_open_high_priority_issues(self, message):
     # TODO: def handle_how_many_vip_issues(self, message):
     # TODO: def handle_most_urgent_issue(self, message):
-
-    def handle_thank_you_intent(self, message):
-        self.speak_dialog("welcome")
 
     def handle_issue_status_intent(self, message):
         # TODO: flexibly, and somewhat reliably  detect if user
