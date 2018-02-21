@@ -2,6 +2,6 @@
   "utterance": "give me a jira status report",
   "intent_type": "StatusReportIntent",
   "intent": {
-    "HowAreYouKeyword": "JIRA status report"
+    "StatusReportKeyword": "JIRA status report"
   }
 }
