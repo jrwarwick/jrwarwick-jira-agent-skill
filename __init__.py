@@ -287,9 +287,9 @@ class JIRASkill(MycroftSkill):
                     # linked/related issues check. At least 'duplicates'
                 else:
                     self.speak(issue.fields.resolution.description)
-                    self.speak("Resolution reached on " + issue.resolutiondate)
+                    self.speak("Resolution reached on " + issue.fields.resolutiondate)
                     # TODO: date math for " x days ago"
-                    self.speak("That is " + descriptive_past(issue.resolutiondate))
+                    self.speak("That is " + descriptive_past(issue.fields.resolutiondate))
             except Exception as e:
                 self.speak("Search for the issue record failed. Sorry.")
                 LOGGER.error('JIRA issue retrieval error!')
