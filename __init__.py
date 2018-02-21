@@ -115,6 +115,22 @@ class JIRASkill(MycroftSkill):
             #             str(id(self)) + "  |  " + str(self.__dict__.keys()) )
             return self.jira.projects()[0].key
 
+    def descriptive_past(self,then):
+        # is this "overloading" method pythonic? and/or "GoodProgramming(R)TM"?
+        if isinstance(then, basestring):
+            then = dateutil.parser.parse(then)
+        if then.tzinfo is None:
+            then = datetime.datetime(then.year,then.month,then.day,tzinfo=tzlocal())
+        ago = datetime.datetime.now(then.tzinfo) - then
+        cronproximate = ''
+        if ago.days == 0:
+            # TODO: a bit about crossing day boundaries if 22 hours etc ago
+            cronproximate = 'today.'
+            # TODO: a bit with less than 60 minutes (3600 sec) is VERY RECENT
+        else:
+            cronproximate = str(ago.days) + ' days ago.'
+        return cronproximate
+
     # This method loads the files needed for the skill's functioning, and
     # creates and registers each intent that the skill uses
     def initialize(self):
@@ -225,7 +241,9 @@ class JIRASkill(MycroftSkill):
                                      on_fail=valid_issue_id_desc, num_retries=3 )
         issue_id = re.sub(r'\s+', '', issue_id)
         LOGGER.info('Attempted issue_id understanding:  "' + issue_id + '"')
-        # TODO dialog, gain ID 
+        # TODO if this issue has/had a blocking issue: then examine that issue for
+        #   recent resolution. If so, then mention it, and then
+        #   offer to "tickle/remind/refresh" this issue
         if isinstance(int(issue_id), int):
             self.speak("Searching for issue " + 
                        self.project_key + '-' + str(issue_id))
@@ -266,12 +284,12 @@ class JIRASkill(MycroftSkill):
                     self.speak("Issue is at " + issue.fields.priority.name + " priority.")
                     if issue.fields.assignee is None:
                         self.speak('And the issue has not yet been assigned to a staff person.')
-                    # overdue check
                     # linked/related issues check. At least 'duplicates'
                 else:
                     self.speak(issue.fields.resolution.description)
                     self.speak("Resolution reached on " + issue.resolutiondate)
                     # TODO: date math for " x days ago"
+                    self.speak("That is " + descriptive_past(issue.resolutiondate))
             except Exception as e:
                 self.speak("Search for the issue record failed. Sorry.")
                 LOGGER.error('JIRA issue retrieval error!')
@@ -291,7 +309,7 @@ class JIRASkill(MycroftSkill):
         email_address = email_address.replace('.','dot')
         # TODO: once the core pronounce_email method is available,
         # replace this naive spell-out approach
-        data = {'telephone_number': telephone_number, 
+        data = {'telephone_number': telephone_number,
                 'email_address': email_address}
         self.speak_dialog("human.contact.info", data)
 
@@ -306,10 +324,10 @@ class JIRASkill(MycroftSkill):
         # Establish requestor identity
         # Get brief general description
         # Get priority
-        # Make a quick search through open 
+        # Make a quick search through open
         # (and perhaps very recently closed) issues,
         #    is this a duplicate issue?
-        # Create Issue, read out ticket key/ID (also print it out, 
+        # Create Issue, read out ticket key/ID (also print it out,
         # if printer attached;
         #    also IM tech staff, if high priority)
 
