@@ -130,7 +130,9 @@ class JIRASkill(MycroftSkill):
         if ago.days == 0:
             # TODO: a bit about crossing day boundaries if 22 hours etc ago
             cronproximate = 'today.'
-            # TODO: a bit with less than 60 minutes (3600 sec) is VERY RECENT
+            # TODO: a bit with less than 60 minutes (3600 sec) is VERY RECENT subcase
+            # TODO: add a "just minutes ago" subsubcase
+            # TODO: add a "late last night" subcase
         else:
             cronproximate = str(ago.days) + ' days ago.'
         return cronproximate
@@ -273,17 +275,7 @@ class JIRASkill(MycroftSkill):
                     if issue.fields.updated is None:
                         self.speak('No recorded progress on this issue, yet.')
                     else:
-                        then = dateutil.parser.parse(issue.fields.updated)
-                        if then.tzinfo is None:
-                            then = datetime.datetime(then.year,then.month,then.day,tzinfo=tzlocal())
-                        ago = datetime.datetime.now(then.tzinfo) - then
-                        cronproximate = ''
-                        if ago.days == 0:
-                            # TODO: a bit about crossing day boundaries if 22 hours etc ago
-                            cronproximate = 'today.'
-                            # TODO: a bit with less than 60 minutes (3600 sec) is VERY RECENT
-                        else:
-                            cronproximate = str(ago.days) + ' days ago.'
+                        cronproximate = self.descriptive_past(issue.fields.updated)
                         self.speak("Record last updated " + cronproximate)
                     self.speak("Issue is at " + issue.fields.priority.name + " priority.")
                     if issue.fields.assignee is None:
@@ -291,10 +283,13 @@ class JIRASkill(MycroftSkill):
                                    'to a staff person.')
                     # linked/related issues check. At least 'duplicates'
                 else:
+                    self.speak("This issue is already resolved. ")
                     self.speak(issue.fields.resolution.description)
-                    self.speak("Resolution reached on " + issue.fields.resolutiondate)
-                    # TODO: date math for " x days ago"
-                    self.speak("That is " + self.descriptive_past(issue.fields.resolutiondate))
+                    #TODO: "about" should be conditional, descript-past  might be "Today"
+                    self.speak(" about " + self.descriptive_past(issue.fields.resolutiondate))
+                    #TODO: yield a trimmed version of resolutiondate,perhaps January 21st
+                    # in in same year, "January 21st, 2018" if outside of current year.
+                    self.speak(" on " + issue.fields.resolutiondate)
             except Exception as e:
                 self.speak("Search for further details on the issue record failed. Sorry.")
                 LOGGER.error('JIRA issue API error!')
