@@ -115,6 +115,9 @@ class JIRASkill(MycroftSkill):
             #             str(id(self)) + "  |  " + str(self.__dict__.keys()) )
             return self.jira.projects()[0].key
 
+    # Accept a datetime (or parsable string representation of same) as "then"
+    # to compare with an evaluated now.
+    # RETURN string which is a speakable, natural clause of form "X days ago"
     def descriptive_past(self,then):
         # is this "overloading" method pythonic? and/or "GoodProgramming(R)TM"?
         if isinstance(then, basestring):
@@ -123,6 +126,7 @@ class JIRASkill(MycroftSkill):
             then = datetime.datetime(then.year,then.month,then.day,tzinfo=tzlocal())
         ago = datetime.datetime.now(then.tzinfo) - then
         cronproximate = ''
+        # TODO: handle negatives, or rather when then is in the future.
         if ago.days == 0:
             # TODO: a bit about crossing day boundaries if 22 hours etc ago
             cronproximate = 'today.'
@@ -232,10 +236,10 @@ class JIRASkill(MycroftSkill):
             return re.match(r'^[\s0-9]{1,20}$', utterance)
 
         def valid_issue_id_desc(utterance):
-            return ('A valid issue I D is an integer number. '
-                    'No prefix, if you please. '
-                    'I will prefix the issue I D with a JIRA project name abbreviation.'
-                    'Let me try again.')
+            return ('A valid issue I D is an integer number.'
+                    ' No prefix, if you please.'
+                    ' I will prefix the issue I D with a JIRA project name abbreviation.'
+                    ' Let us try again.')
 
         issue_id = self.get_response(dialog='specify.issue', validator=issue_id_validator, 
                                      on_fail=valid_issue_id_desc, num_retries=3 )
@@ -291,8 +295,8 @@ class JIRASkill(MycroftSkill):
                     # TODO: date math for " x days ago"
                     self.speak("That is " + descriptive_past(issue.fields.resolutiondate))
             except Exception as e:
-                self.speak("Search for the issue record failed. Sorry.")
-                LOGGER.error('JIRA issue retrieval error!')
+                self.speak("Search for further details on the issue record failed. Sorry.")
+                LOGGER.error('JIRA issue API error!')
                 LOGGER.error(e)
         else:
             self.speak('I am afraid that is not a valid issue id number '
