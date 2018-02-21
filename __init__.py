@@ -287,13 +287,14 @@ class JIRASkill(MycroftSkill):
                         self.speak("Record last updated " + cronproximate)
                     self.speak("Issue is at " + issue.fields.priority.name + " priority.")
                     if issue.fields.assignee is None:
-                        self.speak('And the issue has not yet been assigned to a staff person.')
+                        self.speak('And the issue has not yet been assigned'
+                                   'to a staff person.')
                     # linked/related issues check. At least 'duplicates'
                 else:
                     self.speak(issue.fields.resolution.description)
                     self.speak("Resolution reached on " + issue.fields.resolutiondate)
                     # TODO: date math for " x days ago"
-                    self.speak("That is " + descriptive_past(issue.fields.resolutiondate))
+                    self.speak("That is " + self.descriptive_past(issue.fields.resolutiondate))
             except Exception as e:
                 self.speak("Search for further details on the issue record failed. Sorry.")
                 LOGGER.error('JIRA issue API error!')
