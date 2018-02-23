@@ -53,6 +53,9 @@ class JIRASkill(MycroftSkill):
     # Constants from the core IP skill
     SEC_PER_LETTER = 0.65  # timing based on Mark 1 screen
     LETTERS_PER_SCREEN = 9.0
+    # Special Constants discoverd from Atlassian product documentation
+    # omit leading slash, but include trailing slash
+    JIRA_REST_API_PATH = 'rest/api/2/'
 
     # The constructor of the skill, which calls MycroftSkill's constructor
     def __init__(self):
@@ -82,18 +85,30 @@ class JIRASkill(MycroftSkill):
             #   jira = JIRA(server=os.environ['JIRA_SERVER_URL'],
             #      basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD']))
             #  http://bakjira01.int.bry.com:8080/rest/api/2/
-            # TODO: improve check for rest/api/2 suffix
-            # or instruction user to remove.
-            # Or actually, is it smarter to require user to give fullpath
-            # to rest endpoint? If backwards compatible this makes the skill
-            # less brittle.
+            #  Is there some kind of magical or clever way to discover the current
+            #  available API revision? Maybe let user know if we are not using it?
             server_url = self.settings.get("url", "").strip()
-            if server_url[-11:] == 'rest/api/2/':
-                self.speak("It seems that you have included the rest api two suffix "
-                           "to the server URL. This will probably fail. "
-                           "Just the base URL is required.")
-                self.speak("Please navigate to home.mycroft.ai to amend "
+            if (server_url[0:7].lower() != 'http://' and
+                server_url[0:8].lower() != 'https://'):
+                self.speak("It seems that you have specified an invalid server "
+                           "URL. A valid server URL must include the h t t p "
+                           "colon slash slash prefix.")
+                self.speak("Please navigate to home.mycroft.ai to amend or update "
                            "the JIRA Service Desk server access configuration.")
+                raise ValueError('server_url contained invalid URL, missing '
+                                 'correct prefix: {server_url}'
+                                 .format(server_url=repr(server_url)))
+            if server_url[-11:] == JIRA_REST_API_PATH:
+                self.speak("It seems that you have included the rest api 2 path "
+                           "in the server URL. This should work fine. "
+                           "However, if the API is upgraded, you may need to "
+                           "update my record of the endpoint URL.")
+                self.speak("Please navigate to home.mycroft.ai to amend or update "
+                           "the JIRA Service Desk server access configuration.")
+            else:
+                if server_url[-1:] != '/':
+                    server_url = server_url + '/'
+                server_url = server_url + JIRA_REST_API_PATH
 
             new_jira_connection = JIRA(server=self.settings.get("url", ""),
                                     basic_auth=(self.settings.get("username", ""),
@@ -241,7 +256,7 @@ class JIRASkill(MycroftSkill):
         inquiry = self.jira.search_issues('status != Resolved '
                                           'ORDER BY priority DESC, duedate ASC')
         if inquiry.total < 1:
-            self.speak("No open issues.")
+            self.speak("No unresolved issues.")
         else:
             self.speak(str(inquiry.total) + " issue" + ('', 's')[inquiry.total > 1] +
                        " remain unresolved.")
