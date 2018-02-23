@@ -148,12 +148,12 @@ class JIRASkill(MycroftSkill):
                              self.handle_status_report_intent)
 
         issues_open_intent = IntentBuilder("IssuesOpenIntent").\
-            require("IssueRecordKeyword").require("OpenKeyword").build()
+            require("IssueRecordsKeyword").require("OpenKeyword").build()
         self.register_intent(issues_open_intent,
                              self.handle_issues_open_intent)
 
         issues_overdue_intent = IntentBuilder("IssuesOverdueIntent").\
-            require("IssueRecordKeyword").require("OverdueKeyword").build()
+            require("IssueRecordsKeyword").require("OverdueKeyword").build()
         self.register_intent(issues_overdue_intent,
                              self.handle_issues_overdue_intent)                             
 
