@@ -147,6 +147,16 @@ class JIRASkill(MycroftSkill):
         self.register_intent(status_report_intent, 
                              self.handle_status_report_intent)
 
+        issues_open_intent = IntentBuilder("IssuesOpenIntent").\
+            require("IssueRecordKeyword").require("OpenKeyword").build()
+        self.register_intent(issues_open_intent,
+                             self.handle_issues_open_intent)
+
+        issues_overdue_intent = IntentBuilder("IssuesOverdueIntent").\
+            require("IssueRecordKeyword").require("OverdueKeyword").build()
+        self.register_intent(issues_overdue_intent,
+                             self.handle_issues_overdue_intent)                             
+
         issue_status_intent = IntentBuilder("IssueStatusIntent").\
             require("IssueStatusKeyword").build()
         self.register_intent(issue_status_intent,
@@ -221,8 +231,44 @@ class JIRASkill(MycroftSkill):
         # TODO: SLAs breached or nearly so, if you have that sort of thing.
 
 
-    # TODO: def handle_how_many_open_issues(self, message):
-    # TODO: def handle_how_many_overdue_issues(self, message):
+    def handle_issues_open_intent(self, message):
+        if self.jira is None:
+            LOGGER.info('____' + str(type(self)) + ' :: ' + str(id(self)))
+            self.jira = self.server_login()
+        else:
+            LOGGER.info('JIRA Server login appears to have succeded already.')
+
+        inquiry = self.jira.search_issues('status != Resolved '
+                                          'ORDER BY priority DESC, duedate ASC')
+        if inquiry.total < 1:
+            self.speak("No open issues.")
+        else:
+            self.speak(str(inquiry.total) + " issue" + ('', 's')[inquiry.total > 1] +
+                       " remain unresolved.")
+            thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
+            self.speak("Highest priority unresolved issue is regarding: " +
+                       re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+
+    def handle_issues_overdue_intent(self, message):
+        if self.jira is None:
+            LOGGER.info('____' + str(type(self)) + ' :: ' + str(id(self)))
+            self.jira = self.server_login()
+        else:
+            LOGGER.info('JIRA Server login appears to have succeded already.')
+
+        inquiry = self.jira.search_issues('status != Resolved AND '
+                                          'duedate < now() '
+                                          'ORDER BY duedate')
+        if inquiry.total < 1:
+            self.speak("No overdue issues.")
+        else:
+            self.speak(str(inquiry.total) + " issue" + ('', 's')[inquiry.total > 1] +
+                       " overdue!")
+            thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
+            self.speak("Most overdue issue is regarding: " +
+                       re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+
+
     # TODO: def handle_how_many_open_high_priority_issues(self, message):
     # TODO: def handle_how_many_vip_issues(self, message):
     # TODO: def handle_most_urgent_issue(self, message):
