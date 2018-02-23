@@ -130,6 +130,16 @@ class JIRASkill(MycroftSkill):
             #             str(id(self)) + "  |  " + str(self.__dict__.keys()) )
             return self.jira.projects()[0].key
 
+    # TODO: a helper function to collect together clean-ups for summary line
+    # i.e., since people are sometimes careless and lazy with email subject lines
+    # and sending an email in to an automated handler is a common way of raising
+    # JIRA issues, we see lots of cruft in the summary lines such as FW: and RE:
+    # just have a single standard, flexible inline-string-cleaner. but be careful
+    # not to have false positives like:   Require: diagrams and software
+    # re.sub('([fF][wW]:)+', '', blocker.fields.summary))
+    # re.sub('(^\s*)[rR][eE]:', '', blocker.fields.summary))
+
+
     # Accept a datetime (or parsable string representation of same) as "then"
     # to compare with an evaluated now.
     # RETURN string which is a speakable, natural clause of form "X days ago"
@@ -342,7 +352,17 @@ class JIRASkill(MycroftSkill):
                     if issue.fields.assignee is None:
                         self.speak('And the issue has not yet been assigned'
                                    'to a staff person.')
-                    # linked/related issues check. At least 'duplicates'
+                    # linked/related issues check. At least 'duplicates' and "blocks"
+                    # although there is a little start here, making the bad assumption
+                    # of only one link. a lot TODO here.
+                    if issue.fields.issuelinks[0].type.name.lower() == 'blocks':
+                        blocker = issue.fields.issuelinks[0].inwardIssue
+                        if blocker.fields.status.name.lower() != 'resolved':
+                            #TODO: consider dialog file for this one
+                            self.speak('Also note taht this issue is currently '
+                                       'blocked by outstanding issue ' +
+                                       blocker.key + ' ' +
+                                       re.sub('([fF][wW]:)+', '', blocker.fields.summary))
                 else:
                     self.speak("This issue is already resolved. ")
                     self.speak(issue.fields.resolution.description)
