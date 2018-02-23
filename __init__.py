@@ -98,7 +98,7 @@ class JIRASkill(MycroftSkill):
                 raise ValueError('server_url contained invalid URL, missing '
                                  'correct prefix: {server_url}'
                                  .format(server_url=repr(server_url)))
-            if server_url[-11:] == JIRA_REST_API_PATH:
+            if server_url[-11:] == self.JIRA_REST_API_PATH:
                 self.speak("It seems that you have included the rest api 2 path "
                            "in the server URL. This should work fine. "
                            "However, if the API is upgraded, you may need to "
@@ -108,7 +108,7 @@ class JIRASkill(MycroftSkill):
             else:
                 if server_url[-1:] != '/':
                     server_url = server_url + '/'
-                server_url = server_url + JIRA_REST_API_PATH
+                server_url = server_url + self.JIRA_REST_API_PATH
 
             new_jira_connection = JIRA(server=self.settings.get("url", ""),
                                     basic_auth=(self.settings.get("username", ""),
