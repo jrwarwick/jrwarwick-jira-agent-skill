@@ -169,7 +169,7 @@ class JIRASkill(MycroftSkill):
 
         status_report_intent = IntentBuilder("StatusReportIntent").\
             require("StatusReportKeyword").build()
-        self.register_intent(status_report_intent, 
+        self.register_intent(status_report_intent,
                              self.handle_status_report_intent)
 
         issues_open_intent = IntentBuilder("IssuesOpenIntent").\
@@ -180,7 +180,7 @@ class JIRASkill(MycroftSkill):
         issues_overdue_intent = IntentBuilder("IssuesOverdueIntent").\
             require("IssueRecordsKeyword").require("OverdueKeyword").build()
         self.register_intent(issues_overdue_intent,
-                             self.handle_issues_overdue_intent)                             
+                             self.handle_issues_overdue_intent)
 
         issue_status_intent = IntentBuilder("IssueStatusIntent").\
             require("IssueStatusKeyword").build()
@@ -314,7 +314,7 @@ class JIRASkill(MycroftSkill):
                     ' I will prefix the issue I D with a JIRA project name abbreviation.'
                     ' Let us try again.')
 
-        issue_id = self.get_response(dialog='specify.issue', validator=issue_id_validator, 
+        issue_id = self.get_response(dialog='specify.issue', validator=issue_id_validator,
                                      on_fail=valid_issue_id_desc, num_retries=3 )
         issue_id = re.sub(r'\s+', '', issue_id)
         LOGGER.info('Attempted issue_id understanding:  "' + issue_id + '"')
@@ -322,11 +322,11 @@ class JIRASkill(MycroftSkill):
         #   recent resolution. If so, then mention it, and then
         #   offer to "tickle/remind/refresh" this issue
         if isinstance(int(issue_id), int):
-            self.speak("Searching for issue " + 
+            self.speak("Searching for issue " +
                        self.project_key + '-' + str(issue_id))
             try:
                 issue = self.jira.issue(self.project_key + '-' + str(issue_id))
-                self.speak(issue.fields.summary)
+                self.speak(re.sub('([fF][wW]:)+', '', issue.fields.summary))
                 if issue.fields.resolution is None:
                     self.speak(" is not yet resolved.")
                     if issue.fields.duedate is not None:
@@ -347,15 +347,17 @@ class JIRASkill(MycroftSkill):
                         self.speak('No recorded progress on this issue, yet.')
                     else:
                         cronproximate = self.descriptive_past(issue.fields.updated)
-                        self.speak("Record last updated " + cronproximate)
-                    self.speak("Issue is at " + issue.fields.priority.name + " priority.")
+                        self.speak('Record last updated ' + cronproximate)
+                    self.speak('Issue is at ' + issue.fields.priority.name +
+                               ' priority.')
                     if issue.fields.assignee is None:
-                        self.speak('And the issue has not yet been assigned'
+                        self.speak('And the issue has not yet been assigned '
                                    'to a staff person.')
-                    # linked/related issues check. At least 'duplicates' and "blocks"
-                    # although there is a little start here, making the bad assumption
-                    # of only one link. a lot TODO here.
-                    if issue.fields.issuelinks[0].type.name.lower() == 'blocks':
+                    # linked/related issues check. At least 'duplicates' and
+                    # "blocks" although there is a little start here, making
+                    # the bad assumption of only one link. a lot TODO here.
+                    if (len(issue.fields.issuelinks) and
+                        issue.fields.issuelinks[0].type.name.lower() == 'blocks'):
                         blocker = issue.fields.issuelinks[0].inwardIssue
                         if blocker.fields.status.name.lower() != 'resolved':
                             #TODO: consider dialog file for this one
@@ -415,7 +417,7 @@ class JIRASkill(MycroftSkill):
     def handle_contact_info_intent(self, message):
         telephone_number = self.settings.get("support_telephone", "")
         # TODO check and fallback on telephone number
-        data = {'telephone_number': telephone_number, 
+        data = {'telephone_number': telephone_number,
                 'email_address': self.settings.get("support_email", "")}
         self.speak_dialog("human.contact.info", data)
 
@@ -426,7 +428,7 @@ class JIRASkill(MycroftSkill):
         mycroft.audio.wait_while_speaking()
         self.enclosure.activate_mouth_events()
         self.enclosure.mouth_reset()
-        
+
     # The "stop" method defines what Mycroft does when told to stop during
     # the skill's execution. In this case, since the skill's functionality
     # is extremely simple, the method just contains the keyword "pass", which
