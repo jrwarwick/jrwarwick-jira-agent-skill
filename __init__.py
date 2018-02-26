@@ -89,16 +89,16 @@ class JIRASkill(MycroftSkill):
             # less brittle.
             server_url = self.settings.get("url", "").strip()
             if server_url[-11:] == 'rest/api/2/':
-                self.speak("It seems that you have included the rest api two suffix "
-                           "to the server URL. This will probably fail. "
+                self.speak("It seems that you have included the rest api two "
+                           "suffix to the server URL. This will probably fail. "
                            "Just the base URL is required.")
                 self.speak("Please navigate to home.mycroft.ai to amend "
                            "the JIRA Service Desk server access configuration.")
 
             new_jira_connection = JIRA(server=self.settings.get("url", ""),
-                                    basic_auth=(self.settings.get("username", ""),
-                                                self.settings.get("password", ""))
-                                    )
+                                       basic_auth=(self.settings.get("username", ""),
+                                                   self.settings.get("password", ""))
+                                      )
         except Exception as e:
             LOGGER.error('JIRA Server connection failure!')
             LOGGER.error(e)
@@ -118,12 +118,12 @@ class JIRASkill(MycroftSkill):
     # Accept a datetime (or parsable string representation of same) as "then"
     # to compare with an evaluated now.
     # RETURN string which is a speakable, natural clause of form "X days ago"
-    def descriptive_past(self,then):
+    def descriptive_past(self, then):
         # is this "overloading" method pythonic? and/or "GoodProgramming(R)TM"?
         if isinstance(then, basestring):
             then = dateutil.parser.parse(then)
         if then.tzinfo is None:
-            then = datetime.datetime(then.year,then.month,then.day,tzinfo=tzlocal())
+            then = datetime.datetime(then.year, then.month, then.day, tzinfo=tzlocal())
         ago = datetime.datetime.now(then.tzinfo) - then
         cronproximate = ''
         # TODO: handle negatives, or rather when then is in the future.
@@ -223,7 +223,8 @@ class JIRASkill(MycroftSkill):
         if inquiry.total < 1:
             self.speak("No HIGH priority JIRA issues remain open.")
         else:
-            self.speak(str(inquiry.total) + " high priority issue" + ('', 's')[inquiry.total > 1] +
+            self.speak(str(inquiry.total) + " high priority "
+                       issue" + ('', 's')[inquiry.total > 1] +
                        " remain" + ('s', '')[inquiry.total > 1] + " open!")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Highest priority issue is regarding: " +
@@ -268,7 +269,6 @@ class JIRASkill(MycroftSkill):
             self.speak("Most overdue issue is regarding: " +
                        re.sub('([fF][wW]:)+', '', thissue.fields.summary))
 
-
     # TODO: def handle_how_many_open_high_priority_issues(self, message):
     # TODO: def handle_how_many_vip_issues(self, message):
     # TODO: def handle_most_urgent_issue(self, message):
@@ -277,24 +277,25 @@ class JIRASkill(MycroftSkill):
         # TODO: flexibly, and somewhat reliably  detect if user
         # uttered the project name abbrev. prefix and just deal with it.
 
-        #issue_id = re.sub(r'\s+', '', self.get_response('specify.issue'))
+        # issue_id = re.sub(r'\s+', '', self.get_response('specify.issue'))
 
         def issue_id_validator(utterance):
-            #Confesion: "20 characters" is an arbitrary max in this re
+            # Confesion: "20 characters" is an arbitrary max in this re
             return re.match(r'^[\s0-9]{1,20}$', utterance)
 
         def valid_issue_id_desc(utterance):
             return ('A valid issue I D is an integer number.'
                     ' No prefix, if you please.'
-                    ' I will prefix the issue I D with a JIRA project name abbreviation.'
+                    ' I will prefix the issue I D with a predetermined'
+                    ' JIRA project name abbreviation.'
                     ' Let us try again.')
 
         issue_id = self.get_response(dialog='specify.issue', validator=issue_id_validator, 
                                      on_fail=valid_issue_id_desc, num_retries=3 )
         issue_id = re.sub(r'\s+', '', issue_id)
         LOGGER.info('Attempted issue_id understanding:  "' + issue_id + '"')
-        # TODO if this issue has/had a blocking issue: then examine that issue for
-        #   recent resolution. If so, then mention it, and then
+        # TODO if this issue has/had a blocking issue: then examine that issue
+        #   for recent resolution. If so, then mention it, and then
         #   offer to "tickle/remind/refresh" this issue
         if isinstance(int(issue_id), int):
             self.speak("Searching for issue " + 
@@ -307,7 +308,7 @@ class JIRASkill(MycroftSkill):
                     if issue.fields.duedate is not None:
                         then = dateutil.parser.parse(issue.fields.duedate)
                         if then.tzinfo is None:
-                            then = datetime.datetime(then.year,then.month,then.day,tzinfo=tzlocal())
+                            then = datetime.datetime(then.year, then.month, then.day, tzinfo=tzlocal())
                         ago = datetime.datetime.now(then.tzinfo) - then
                         cronproximate = ''
                         if ago.days < 0:
@@ -331,13 +332,14 @@ class JIRASkill(MycroftSkill):
                 else:
                     self.speak("This issue is already resolved. ")
                     self.speak(issue.fields.resolution.description)
-                    #TODO: "about" should be conditional, descript-past  might be "Today"
+                    # TODO: "about" should be conditional, descript-past  might be "Today"
                     self.speak(" about " + self.descriptive_past(issue.fields.resolutiondate))
-                    #TODO: yield a trimmed version of resolutiondate,perhaps January 21st
+                    # TODO: yield a trimmed version of resolutiondate,perhaps January 21st
                     # in in same year, "January 21st, 2018" if outside of current year.
                     self.speak(" on " + issue.fields.resolutiondate)
             except Exception as e:
-                self.speak("Search for further details on the issue record failed. Sorry.")
+                self.speak("Search for further details on the issue record "
+                           "failed. Sorry.")
                 LOGGER.error('JIRA issue API error!')
                 LOGGER.error(e)
         else:
@@ -352,7 +354,7 @@ class JIRASkill(MycroftSkill):
         # TODO check and fallback on telephone number
 
         email_address = ' '.join(list(self.settings.get("support_email", "")))
-        email_address = email_address.replace('.','dot')
+        email_address = email_address.replace('.', 'dot')
         # TODO: once the core pronounce_email method is available,
         # replace this naive spell-out approach
         data = {'telephone_number': telephone_number,
