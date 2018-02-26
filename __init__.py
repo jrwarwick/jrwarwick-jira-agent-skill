@@ -53,6 +53,9 @@ class JIRASkill(MycroftSkill):
     # Constants from the core IP skill
     SEC_PER_LETTER = 0.65  # timing based on Mark 1 screen
     LETTERS_PER_SCREEN = 9.0
+    # Special Constants discoverd from Atlassian product documentation
+    # omit leading slash, but include trailing slash
+    JIRA_REST_API_PATH = 'rest/api/2/'
 
     # The constructor of the skill, which calls MycroftSkill's constructor
     def __init__(self):
@@ -82,18 +85,30 @@ class JIRASkill(MycroftSkill):
             #   jira = JIRA(server=os.environ['JIRA_SERVER_URL'],
             #      basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD']))
             #  http://bakjira01.int.bry.com:8080/rest/api/2/
-            # TODO: improve check for rest/api/2 suffix
-            # or instruction user to remove.
-            # Or actually, is it smarter to require user to give fullpath
-            # to rest endpoint? If backwards compatible this makes the skill
-            # less brittle.
+            #  Is there some kind of magical or clever way to discover the current
+            #  available API revision? Maybe let user know if we are not using it?
             server_url = self.settings.get("url", "").strip()
-            if server_url[-11:] == 'rest/api/2/':
-                self.speak("It seems that you have included the rest api two "
-                           "suffix to the server URL. This will probably fail. "
-                           "Just the base URL is required.")
-                self.speak("Please navigate to home.mycroft.ai to amend "
+            if (server_url[0:7].lower() != 'http://' and
+                server_url[0:8].lower() != 'https://'):
+                self.speak("It seems that you have specified an invalid server "
+                           "URL. A valid server URL must include the h t t p "
+                           "colon slash slash prefix.")
+                self.speak("Please navigate to home.mycroft.ai to amend or update "
                            "the JIRA Service Desk server access configuration.")
+                raise ValueError('server_url contained invalid URL, missing '
+                                 'correct prefix: {server_url}'
+                                 .format(server_url=repr(server_url)))
+            if server_url[-11:] == self.JIRA_REST_API_PATH:
+                self.speak("It seems that you have included the rest api 2 path "
+                           "in the server URL. This should work fine. "
+                           "However, if the API is upgraded, you may need to "
+                           "update my record of the endpoint URL.")
+                self.speak("Please navigate to home.mycroft.ai to amend or update "
+                           "the JIRA Service Desk server access configuration.")
+            else:
+                if server_url[-1:] != '/':
+                    server_url = server_url + '/'
+                server_url = server_url + self.JIRA_REST_API_PATH
 
             new_jira_connection = JIRA(server=self.settings.get("url", ""),
                                        basic_auth=(self.settings.get("username", ""),
@@ -114,6 +129,16 @@ class JIRASkill(MycroftSkill):
             # LOGGER.debug("--SELF reveal: " + str(type(self)) + " | " +
             #             str(id(self)) + "  |  " + str(self.__dict__.keys()) )
             return self.jira.projects()[0].key
+
+    # TODO: a helper function to collect together clean-ups for summary line
+    # i.e., since people are sometimes careless and lazy with email subject lines
+    # and sending an email in to an automated handler is a common way of raising
+    # JIRA issues, we see lots of cruft in the summary lines such as FW: and RE:
+    # just have a single standard, flexible inline-string-cleaner. but be careful
+    # not to have false positives like:   Require: diagrams and software
+    # re.sub('([fF][wW]:)+', '', blocker.fields.summary))
+    # re.sub('(^\s*)[rR][eE]:', '', blocker.fields.summary))
+
 
     # Accept a datetime (or parsable string representation of same) as "then"
     # to compare with an evaluated now.
@@ -144,7 +169,7 @@ class JIRASkill(MycroftSkill):
 
         status_report_intent = IntentBuilder("StatusReportIntent").\
             require("StatusReportKeyword").build()
-        self.register_intent(status_report_intent, 
+        self.register_intent(status_report_intent,
                              self.handle_status_report_intent)
 
         issues_open_intent = IntentBuilder("IssuesOpenIntent").\
@@ -155,7 +180,7 @@ class JIRASkill(MycroftSkill):
         issues_overdue_intent = IntentBuilder("IssuesOverdueIntent").\
             require("IssueRecordsKeyword").require("OverdueKeyword").build()
         self.register_intent(issues_overdue_intent,
-                             self.handle_issues_overdue_intent)                             
+                             self.handle_issues_overdue_intent)
 
         issue_status_intent = IntentBuilder("IssueStatusIntent").\
             require("IssueStatusKeyword").build()
@@ -242,7 +267,7 @@ class JIRASkill(MycroftSkill):
         inquiry = self.jira.search_issues('status != Resolved '
                                           'ORDER BY priority DESC, duedate ASC')
         if inquiry.total < 1:
-            self.speak("No open issues.")
+            self.speak("No unresolved issues.")
         else:
             self.speak(str(inquiry.total) + " issue" + ('', 's')[inquiry.total > 1] +
                        " remain unresolved.")
@@ -290,7 +315,8 @@ class JIRASkill(MycroftSkill):
                     ' JIRA project name abbreviation.'
                     ' Let us try again.')
 
-        issue_id = self.get_response(dialog='specify.issue', validator=issue_id_validator, 
+        issue_id = self.get_response(dialog='specify.issue',
+                                     validator=issue_id_validator,
                                      on_fail=valid_issue_id_desc, num_retries=3 )
         issue_id = re.sub(r'\s+', '', issue_id)
         LOGGER.info('Attempted issue_id understanding:  "' + issue_id + '"')
@@ -298,11 +324,11 @@ class JIRASkill(MycroftSkill):
         #   for recent resolution. If so, then mention it, and then
         #   offer to "tickle/remind/refresh" this issue
         if isinstance(int(issue_id), int):
-            self.speak("Searching for issue " + 
+            self.speak("Searching for issue " +
                        self.project_key + '-' + str(issue_id))
             try:
                 issue = self.jira.issue(self.project_key + '-' + str(issue_id))
-                self.speak(issue.fields.summary)
+                self.speak(re.sub('([fF][wW]:)+', '', issue.fields.summary))
                 if issue.fields.resolution is None:
                     self.speak(" is not yet resolved.")
                     if issue.fields.duedate is not None:
@@ -323,12 +349,24 @@ class JIRASkill(MycroftSkill):
                         self.speak('No recorded progress on this issue, yet.')
                     else:
                         cronproximate = self.descriptive_past(issue.fields.updated)
-                        self.speak("Record last updated " + cronproximate)
-                    self.speak("Issue is at " + issue.fields.priority.name + " priority.")
+                        self.speak('Record last updated ' + cronproximate)
+                    self.speak('Issue is at ' + issue.fields.priority.name +
+                               ' priority.')
                     if issue.fields.assignee is None:
-                        self.speak('And the issue has not yet been assigned'
+                        self.speak('And the issue has not yet been assigned '
                                    'to a staff person.')
-                    # linked/related issues check. At least 'duplicates'
+                    # linked/related issues check. At least 'duplicates' and
+                    # "blocks" although there is a little start here, making
+                    # the bad assumption of only one link. a lot TODO here.
+                    if (len(issue.fields.issuelinks) and
+                        issue.fields.issuelinks[0].type.name.lower() == 'blocks'):
+                        blocker = issue.fields.issuelinks[0].inwardIssue
+                        if blocker.fields.status.name.lower() != 'resolved':
+                            #TODO: consider dialog file for this one
+                            self.speak('Also note taht this issue is currently '
+                                       'blocked by outstanding issue ' +
+                                       blocker.key + ' ' +
+                                       re.sub('([fF][wW]:)+', '', blocker.fields.summary))
                 else:
                     self.speak("This issue is already resolved. ")
                     self.speak(issue.fields.resolution.description)
@@ -382,7 +420,7 @@ class JIRASkill(MycroftSkill):
     def handle_contact_info_intent(self, message):
         telephone_number = self.settings.get("support_telephone", "")
         # TODO check and fallback on telephone number
-        data = {'telephone_number': telephone_number, 
+        data = {'telephone_number': telephone_number,
                 'email_address': self.settings.get("support_email", "")}
         self.speak_dialog("human.contact.info", data)
 
@@ -393,7 +431,7 @@ class JIRASkill(MycroftSkill):
         mycroft.audio.wait_while_speaking()
         self.enclosure.activate_mouth_events()
         self.enclosure.mouth_reset()
-        
+
     # The "stop" method defines what Mycroft does when told to stop during
     # the skill's execution. In this case, since the skill's functionality
     # is extremely simple, the method just contains the keyword "pass", which

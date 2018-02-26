@@ -1,7 +1,8 @@
 {
-  "utterance": "Thank you",
-  "intent_type": "ThankYouIntent",
+  "utterance": "how many jira issues are open",
+  "intent_type": "IssuesOpenIntent",
   "intent": {
-    "ThankYouKeyword": "thank you"
+    "IssueRecordsKeyword": "thank you"
+    //multivalue??
   }
 }
