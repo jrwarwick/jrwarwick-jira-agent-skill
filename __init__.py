@@ -69,8 +69,8 @@ class JIRASkill(MycroftSkill):
         new_jira_connection = None
         try:
             # TODO: revisit this. null/none/"" ?
-            if self.settings.get("url", "") or \
-                self.settings.get("username", "") or \
+            if self.settings.get("url", "") or
+                self.settings.get("username", "") or
                 self.settings.get("password", ""):
                     self._is_setup = True
             else:
@@ -117,7 +117,7 @@ class JIRASkill(MycroftSkill):
             new_jira_connection = JIRA(server=self.settings.get("url", ""),
                                        basic_auth=(self.settings.get("username", ""),
                                                    self.settings.get("password", ""))
-                                      )
+                                       )
         except Exception:
             LOGGER.exception('JIRA Server connection failure!')            
 
@@ -375,11 +375,28 @@ class JIRASkill(MycroftSkill):
                 else:
                     self.speak("This issue is already resolved. ")
                     self.speak(issue.fields.resolution.description)
-                    # TODO: "about" should be conditional, descript-past  might be "Today"
+                    # TODO: "about" should be conditional, 
+                    #       descript-past might be "Today"
                     self.speak(" about " + self.descriptive_past(issue.fields.resolutiondate))
-                    # TODO: yield a trimmed version of resolutiondate,perhaps January 21st
-                    # in in same year, "January 21st, 2018" if outside of current year.
-                    self.speak(" on " + issue.fields.resolutiondate)
+                    # TODO: yield a trimmed version of resolutiondate,
+                    #       perhaps January 21st
+                    # in in same year, "January 21st, 2018" if outside of 
+                    # current year.
+                    self.speak(" on " + issue.fields.resolutiondate) 
+                    then = issue.fields.resolutiondate
+                    if isinstance(then, basestring):
+                        then = dateutil.parser.parse(then)
+                    if then.tzinfo is None:
+                        then = datetime.datetime(then.year, then.month, then.day, tzinfo=tzlocal())
+                    if then.year == datetime.datetime.now(then.tzinfo).year:
+                        ago = datetime.datetime.now(then.tzinfo) - then
+                        if ago.days < 7:
+                            self.speak(" just last " + then.strftime('%A'))
+                        self.speak(" on " + then.strftime('%B %d'))
+                    else:
+                        self.speak(" on " + then.strftime('%B %d %Y'))
+                        
+                    
             except Exception:
                 self.speak("Search for further details on the issue record "
                            "failed. Sorry.")
