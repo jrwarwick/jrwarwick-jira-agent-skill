@@ -69,42 +69,46 @@ class JIRASkill(MycroftSkill):
         new_jira_connection = None
         try:
             # TODO: revisit this. null/none/"" ?
-            if self.settings.get("url", "") or \
-                self.settings.get("username", "") or \
+            if self.settings.get("url", "") or
+                self.settings.get("username", "") or
                 self.settings.get("password", ""):
                     self._is_setup = True
             else:
                 # There appears to be a planned, but so far only stub for this
                 # get_intro_message(self)   in docs. So, TODO-one-day?
-                self.speak("Please navigate to home.mycroft.ai to establish or "
-                           "complete JIRA Service Desk server access configuration.")
-        except Exception as e:
-            LOGGER.error(e)
+                self.speak("Please navigate to home.mycroft.ai to establish "
+                           "or complete JIRA Service Desk server access "
+                           "configuration.")
+        except Exception:
+            LOGGER.exception('Error while trying to retrieve skill settings.')
         try:
             # Would a config fallback be appropriate?
             #   jira = JIRA(server=os.environ['JIRA_SERVER_URL'],
             #      basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD']))
             #  http://bakjira01.int.bry.com:8080/rest/api/2/
-            #  Is there some kind of magical or clever way to discover the current
-            #  available API revision? Maybe let user know if we are not using it?
+            #  Is there some kind of magical or clever way to 
+            # discover the current available API revision? 
+            # Maybe let user know if we are not using it?
             server_url = self.settings.get("url", "").strip()
             if (server_url[0:7].lower() != 'http://' and
                 server_url[0:8].lower() != 'https://'):
-                self.speak("It seems that you have specified an invalid server "
-                           "URL. A valid server URL must include the h t t p "
-                           "colon slash slash prefix.")
-                self.speak("Please navigate to home.mycroft.ai to amend or update "
-                           "the JIRA Service Desk server access configuration.")
+                self.speak("It seems that you have specified an invalid "
+                           "server URL. A valid server URL must include "
+                           "the h t t p colon slash slash prefix.")
+                self.speak("Please navigate to home.mycroft.ai "
+                           "to amend or update the JIRA Service Desk "
+                           "server access configuration.")
                 raise ValueError('server_url contained invalid URL, missing '
                                  'correct prefix: {server_url}'
                                  .format(server_url=repr(server_url)))
             if server_url[-11:] == self.JIRA_REST_API_PATH:
-                self.speak("It seems that you have included the rest api 2 path "
-                           "in the server URL. This should work fine. "
+                self.speak("It seems that you have included the rest api 2 "
+                           "path in the server URL. This should work fine. "
                            "However, if the API is upgraded, you may need to "
                            "update my record of the endpoint URL.")
-                self.speak("Please navigate to home.mycroft.ai to amend or update "
-                           "the JIRA Service Desk server access configuration.")
+                self.speak("Please navigate to home.mycroft.ai "
+                           "to amend or update the JIRA Service Desk "
+                           "server access configuration.")
             else:
                 if server_url[-1:] != '/':
                     server_url = server_url + '/'
@@ -113,10 +117,9 @@ class JIRASkill(MycroftSkill):
             new_jira_connection = JIRA(server=self.settings.get("url", ""),
                                        basic_auth=(self.settings.get("username", ""),
                                                    self.settings.get("password", ""))
-                                      )
-        except Exception as e:
-            LOGGER.error('JIRA Server connection failure!')
-            LOGGER.error(e)
+                                       )
+        except Exception:
+            LOGGER.exception('JIRA Server connection failure!')            
 
         return new_jira_connection
 
@@ -131,11 +134,13 @@ class JIRASkill(MycroftSkill):
             return self.jira.projects()[0].key
 
     # TODO: a helper function to collect together clean-ups for summary line
-    # i.e., since people are sometimes careless and lazy with email subject lines
-    # and sending an email in to an automated handler is a common way of raising
-    # JIRA issues, we see lots of cruft in the summary lines such as FW: and RE:
-    # just have a single standard, flexible inline-string-cleaner. but be careful
-    # not to have false positives like:   Require: diagrams and software
+    # i.e., since people are sometimes careless and lazy with
+    # email subject lines and sending an email in to an automated handler
+    # is a common way of raising JIRA issues, we see lots of cruft in the
+    # summary lines such as FW: and RE:
+    # just have a single standard, flexible inline-string-cleaner. 
+    # but be careful not to have false positives like:
+    #    Require: diagrams and software
     # re.sub('([fF][wW]:)+', '', blocker.fields.summary))
     # re.sub('(^\s*)[rR][eE]:', '', blocker.fields.summary))
 
@@ -370,16 +375,32 @@ class JIRASkill(MycroftSkill):
                 else:
                     self.speak("This issue is already resolved. ")
                     self.speak(issue.fields.resolution.description)
-                    # TODO: "about" should be conditional, descript-past  might be "Today"
+                    # TODO: "about" should be conditional, 
+                    #       descript-past might be "Today"
                     self.speak(" about " + self.descriptive_past(issue.fields.resolutiondate))
-                    # TODO: yield a trimmed version of resolutiondate,perhaps January 21st
-                    # in in same year, "January 21st, 2018" if outside of current year.
-                    self.speak(" on " + issue.fields.resolutiondate)
-            except Exception as e:
+                    # TODO: yield a trimmed version of resolutiondate,
+                    #       perhaps January 21st
+                    # in in same year, "January 21st, 2018" if outside of 
+                    # current year.
+                    self.speak(" on " + issue.fields.resolutiondate) 
+                    then = issue.fields.resolutiondate
+                    if isinstance(then, basestring):
+                        then = dateutil.parser.parse(then)
+                    if then.tzinfo is None:
+                        then = datetime.datetime(then.year, then.month, then.day, tzinfo=tzlocal())
+                    if then.year == datetime.datetime.now(then.tzinfo).year:
+                        ago = datetime.datetime.now(then.tzinfo) - then
+                        if ago.days < 7:
+                            self.speak(" just last " + then.strftime('%A'))
+                        self.speak(" on " + then.strftime('%B %d'))
+                    else:
+                        self.speak(" on " + then.strftime('%B %d %Y'))
+                        
+                    
+            except Exception:
                 self.speak("Search for further details on the issue record "
                            "failed. Sorry.")
-                LOGGER.error('JIRA issue API error!')
-                LOGGER.error(e)
+                LOGGER.exception('JIRA issue API error!')
         else:
             self.speak('I am afraid that is not a valid issue id number '
                        'or perhaps I misunderstood.')
