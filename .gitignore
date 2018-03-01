@@ -1,5 +1,6 @@
 # otros
 compile.check.msg
+settings.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
