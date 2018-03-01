@@ -85,26 +85,29 @@ class JIRASkill(MycroftSkill):
             #   jira = JIRA(server=os.environ['JIRA_SERVER_URL'],
             #      basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD']))
             #  http://bakjira01.int.bry.com:8080/rest/api/2/
-            #  Is there some kind of magical or clever way to discover the current
-            #  available API revision? Maybe let user know if we are not using it?
+            #  Is there some kind of magical or clever way to 
+            # discover the current available API revision? 
+            # Maybe let user know if we are not using it?
             server_url = self.settings.get("url", "").strip()
             if (server_url[0:7].lower() != 'http://' and
                 server_url[0:8].lower() != 'https://'):
                 self.speak("It seems that you have specified an invalid server "
                            "URL. A valid server URL must include the h t t p "
                            "colon slash slash prefix.")
-                self.speak("Please navigate to home.mycroft.ai to amend or update "
-                           "the JIRA Service Desk server access configuration.")
+                self.speak("Please navigate to home.mycroft.ai "
+                           "to amend or update the JIRA Service Desk "
+                           "server access configuration.")
                 raise ValueError('server_url contained invalid URL, missing '
                                  'correct prefix: {server_url}'
                                  .format(server_url=repr(server_url)))
             if server_url[-11:] == self.JIRA_REST_API_PATH:
-                self.speak("It seems that you have included the rest api 2 path "
-                           "in the server URL. This should work fine. "
+                self.speak("It seems that you have included the rest api 2 "
+                           "path in the server URL. This should work fine. "
                            "However, if the API is upgraded, you may need to "
                            "update my record of the endpoint URL.")
-                self.speak("Please navigate to home.mycroft.ai to amend or update "
-                           "the JIRA Service Desk server access configuration.")
+                self.speak("Please navigate to home.mycroft.ai "
+                           "to amend or update the JIRA Service Desk "
+                           "server access configuration.")
             else:
                 if server_url[-1:] != '/':
                     server_url = server_url + '/'
@@ -131,11 +134,13 @@ class JIRASkill(MycroftSkill):
             return self.jira.projects()[0].key
 
     # TODO: a helper function to collect together clean-ups for summary line
-    # i.e., since people are sometimes careless and lazy with email subject lines
-    # and sending an email in to an automated handler is a common way of raising
-    # JIRA issues, we see lots of cruft in the summary lines such as FW: and RE:
-    # just have a single standard, flexible inline-string-cleaner. but be careful
-    # not to have false positives like:   Require: diagrams and software
+    # i.e., since people are sometimes careless and lazy with
+    # email subject lines and sending an email in to an automated handler
+    # is a common way of raising JIRA issues, we see lots of cruft in the
+    # summary lines such as FW: and RE:
+    # just have a single standard, flexible inline-string-cleaner. 
+    # but be careful not to have false positives like:
+    #    Require: diagrams and software
     # re.sub('([fF][wW]:)+', '', blocker.fields.summary))
     # re.sub('(^\s*)[rR][eE]:', '', blocker.fields.summary))
 
