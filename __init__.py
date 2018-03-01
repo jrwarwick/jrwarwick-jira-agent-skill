@@ -69,13 +69,13 @@ class JIRASkill(MycroftSkill):
         new_jira_connection = None
         try:
             # TODO: revisit this. null/none/"" ?
-            if self.settings.get("url", "") or
+            if (self.settings.get("url", "") or
                 self.settings.get("username", "") or
-                self.settings.get("password", ""):
+                self.settings.get("password", "")):
                     self._is_setup = True
             else:
                 # There appears to be a planned, but so far only stub for this
-                # get_intro_message(self)   in docs. So, TODO-one-day?
+                # get_intro_message(self)  in docs. So, TODO-one-day?
                 self.speak("Please navigate to home.mycroft.ai to establish "
                            "or complete JIRA Service Desk server access "
                            "configuration.")
@@ -178,7 +178,8 @@ class JIRASkill(MycroftSkill):
                              self.handle_status_report_intent)
 
         issues_open_intent = IntentBuilder("IssuesOpenIntent").\
-            optional("HowManyKeyword").require("IssueRecordsKeyword").require("OpenKeyword").build()
+            require("IssueRecordsKeyword").require("OpenKeyword").build()
+            # optional("HowManyKeyword").require("IssueRecordsKeyword").require("OpenKeyword").build()
         self.register_intent(issues_open_intent,
                              self.handle_issues_open_intent)
 
@@ -376,13 +377,11 @@ class JIRASkill(MycroftSkill):
                     self.speak("This issue is already resolved. ")
                     self.speak(issue.fields.resolution.description)
                     # TODO: "about" should be conditional, 
-                    #       descript-past might be "Today"
+                    #       descript-past might be "Today". In that case the specific date
+                    #                     below would also be unneeded.
                     self.speak(" about " + self.descriptive_past(issue.fields.resolutiondate))
-                    # TODO: yield a trimmed version of resolutiondate,
-                    #       perhaps January 21st
-                    # in in same year, "January 21st, 2018" if outside of 
-                    # current year.
-                    self.speak(" on " + issue.fields.resolutiondate) 
+                    # give nice, short form of specific date if in in current year, 
+                    # or "January 21st, 2018" if outside of current year.
                     then = issue.fields.resolutiondate
                     if isinstance(then, basestring):
                         then = dateutil.parser.parse(then)
