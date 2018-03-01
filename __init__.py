@@ -173,7 +173,7 @@ class JIRASkill(MycroftSkill):
                              self.handle_status_report_intent)
 
         issues_open_intent = IntentBuilder("IssuesOpenIntent").\
-            require("IssueRecordsKeyword").require("OpenKeyword").build()
+            optional("HowManyKeyword").require("IssueRecordsKeyword").require("OpenKeyword").build()
         self.register_intent(issues_open_intent,
                              self.handle_issues_open_intent)
 
@@ -249,7 +249,7 @@ class JIRASkill(MycroftSkill):
             self.speak("No HIGH priority JIRA issues remain open.")
         else:
             self.speak(str(inquiry.total) + " high priority "
-                       issue" + ('', 's')[inquiry.total > 1] +
+                       "issue" + ('', 's')[inquiry.total > 1] +
                        " remain" + ('s', '')[inquiry.total > 1] + " open!")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Highest priority issue is regarding: " +
