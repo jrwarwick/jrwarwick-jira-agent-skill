@@ -76,10 +76,11 @@ class JIRASkill(MycroftSkill):
             else:
                 # There appears to be a planned, but so far only stub for this
                 # get_intro_message(self)   in docs. So, TODO-one-day?
-                self.speak("Please navigate to home.mycroft.ai to establish or "
-                           "complete JIRA Service Desk server access configuration.")
-        except Exception as e:
-            LOGGER.error(e)
+                self.speak("Please navigate to home.mycroft.ai to establish "
+                           "or complete JIRA Service Desk server access "
+                           "configuration.")
+        except Exception:
+            LOGGER.exception('Error while trying to retrieve skill settings.')
         try:
             # Would a config fallback be appropriate?
             #   jira = JIRA(server=os.environ['JIRA_SERVER_URL'],
@@ -91,9 +92,9 @@ class JIRASkill(MycroftSkill):
             server_url = self.settings.get("url", "").strip()
             if (server_url[0:7].lower() != 'http://' and
                 server_url[0:8].lower() != 'https://'):
-                self.speak("It seems that you have specified an invalid server "
-                           "URL. A valid server URL must include the h t t p "
-                           "colon slash slash prefix.")
+                self.speak("It seems that you have specified an invalid "
+                           "server URL. A valid server URL must include "
+                           "the h t t p colon slash slash prefix.")
                 self.speak("Please navigate to home.mycroft.ai "
                            "to amend or update the JIRA Service Desk "
                            "server access configuration.")
@@ -117,9 +118,8 @@ class JIRASkill(MycroftSkill):
                                        basic_auth=(self.settings.get("username", ""),
                                                    self.settings.get("password", ""))
                                       )
-        except Exception as e:
-            LOGGER.error('JIRA Server connection failure!')
-            LOGGER.error(e)
+        except Exception:
+            LOGGER.exception('JIRA Server connection failure!')            
 
         return new_jira_connection
 
@@ -380,11 +380,10 @@ class JIRASkill(MycroftSkill):
                     # TODO: yield a trimmed version of resolutiondate,perhaps January 21st
                     # in in same year, "January 21st, 2018" if outside of current year.
                     self.speak(" on " + issue.fields.resolutiondate)
-            except Exception as e:
+            except Exception:
                 self.speak("Search for further details on the issue record "
                            "failed. Sorry.")
-                LOGGER.error('JIRA issue API error!')
-                LOGGER.error(e)
+                LOGGER.exception('JIRA issue API error!')
         else:
             self.speak('I am afraid that is not a valid issue id number '
                        'or perhaps I misunderstood.')
