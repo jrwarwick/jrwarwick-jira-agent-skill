@@ -63,9 +63,11 @@ class JIRASkill(MycroftSkill):
         self.jira = None
         self.project_key = None
 
-    # Establish basic login via jira package interface (RESTful API)
-    # RETURN the connection object.
     def server_login(self):
+    """Establish basic login via jira package interface (RESTful API)
+
+    RETURN the connection object.
+    """
         new_jira_connection = None
         try:
             # TODO: revisit this. null/none/"" ?
@@ -123,15 +125,17 @@ class JIRASkill(MycroftSkill):
 
         return new_jira_connection
 
-    # Determine project key (prefix to issue IDs)
-    # RETURN string which is project key
     def get_jira_project(self):
-            # Probably a bit sloppy to just take the first project from a list
-            # but this skill is oriented around a single-project Servie Desk
-            # only type install. Caveat Emptor or something.
-            # LOGGER.debug("--SELF reveal: " + str(type(self)) + " | " +
-            #             str(id(self)) + "  |  " + str(self.__dict__.keys()) )
-            return self.jira.projects()[0].key
+        """Determine JIRA project key (for autoamtic prefix to issue IDs)
+
+        RETURN string which is project key
+        """
+        # Probably a bit sloppy to just take the first project from a list
+        # but this skill is oriented around a single-project Servie Desk
+        # only type install. Caveat Emptor or something.
+        # LOGGER.debug("--SELF reveal: " + str(type(self)) + " | " +
+        #             str(id(self)) + "  |  " + str(self.__dict__.keys()) )
+        return self.jira.projects()[0].key
 
     # TODO: a helper function to collect together clean-ups for summary line
     # i.e., since people are sometimes careless and lazy with
@@ -145,10 +149,12 @@ class JIRASkill(MycroftSkill):
     # re.sub('(^\s*)[rR][eE]:', '', blocker.fields.summary))
 
 
-    # Accept a datetime (or parsable string representation of same) as "then"
-    # to compare with an evaluated now.
-    # RETURN string which is a speakable, natural clause of form "X days ago"
     def descriptive_past(self, then):
+        """Accept a datetime (or parsable string representation of same) as "then"
+        to compare with an evaluated now.
+        
+        RETURN string which is a speakable, natural clause of form "X days ago"
+        """
         # is this "overloading" method pythonic? and/or "GoodProgramming(R)TM"?
         if isinstance(then, basestring):
             then = dateutil.parser.parse(then)
@@ -167,9 +173,10 @@ class JIRASkill(MycroftSkill):
             cronproximate = str(ago.days) + ' days ago.'
         return cronproximate
 
-    # This method loads the files needed for the skill's functioning, and
-    # creates and registers each intent that the skill uses
     def initialize(self):
+        """This method loads the files needed for the skill's functioning, and
+        creates and registers each intent that the skill uses
+        """
         self.load_data_files(dirname(__file__))
 
         status_report_intent = IntentBuilder("StatusReportIntent").\
@@ -210,13 +217,9 @@ class JIRASkill(MycroftSkill):
         LOGGER.info("JIRA project key set to '" + self.project_key + "'.")
 
 
-    # The "handle_xxxx_intent" functions define Mycroft's behavior when
-    # each of the skill's intents is triggered: in this case, he simply
-    # speaks a response. Note that the "speak_dialog" method doesn't
-    # actually speak the text it's passed--instead, that text is the filename
-    # of a file in the dialog folder, and Mycroft speaks its contents when
-    # the method is called.
     def handle_status_report_intent(self, message):
+        """Handle intent for a general, overall service desk status report.
+        """
         if self.jira is None:
             LOGGER.info('____' + str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
@@ -452,15 +455,17 @@ class JIRASkill(MycroftSkill):
         self.enclosure.activate_mouth_events()
         self.enclosure.mouth_reset()
 
-    # The "stop" method defines what Mycroft does when told to stop during
-    # the skill's execution. In this case, since the skill's functionality
-    # is extremely simple, the method just contains the keyword "pass", which
-    # does nothing.
-    def stop(self):
+    def stop(self):        
+        """The "stop" method defines what Mycroft does when told to stop during
+        the skill's execution. In this case, since the skill's functionality
+        is extremely simple, the method just contains the keyword "pass", which
+        does nothing.
+        """
         pass
 
 
-# The "create_skill()" method is used to create an instance of the skill.
-# Note that it's outside the class itself.
 def create_skill():
+    """The "create_skill()" method is used to create an instance of the skill.
+    Note that it's outside the class itself.
+    """
     return JIRASkill()
