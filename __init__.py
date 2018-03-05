@@ -199,6 +199,11 @@ class JIRASkill(MycroftSkill):
         self.register_intent(issues_overdue_intent,
                              self.handle_issues_overdue_intent)
 
+        most_urgent_issue_intent = IntentBuilder("MostUrgentIssueIntent").\
+            require("MostUrgentKeyword").require("IssueRecordKeyword").build()
+        self.register_intent(most_urgent_issue_intent,
+                             self.handle_most_urgent_issue)
+
         issue_status_intent = IntentBuilder("IssueStatusIntent").\
             require("IssueStatusKeyword").build()
         self.register_intent(issue_status_intent,
@@ -291,7 +296,8 @@ class JIRASkill(MycroftSkill):
 
     def handle_issues_overdue_intent(self, message):
         if self.jira is None:
-            LOGGER.info('____' + str(type(self)) + ' :: ' + str(id(self)))
+            LOGGER.info('Unexpectedly absent jira connection' +
+                        str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
@@ -311,7 +317,31 @@ class JIRASkill(MycroftSkill):
 
     # TODO: def handle_how_many_open_high_priority_issues(self, message):
     # TODO: def handle_how_many_vip_issues(self, message):
-    # TODO: def handle_most_urgent_issue(self, message):
+    # TODO: def handle_how_many_queue_issues(self, message):
+        # stats on named queues. JIRA comes seeded with a few,
+        # but make it a param
+
+
+    def handle_most_urgent_issue(self, message):
+        # this one might need a little more special sauce to it.
+        # does something overdue at medium priority exceed
+        # explicit high priority? Do we account for VIP factor?
+        if self.jira is None:
+            LOGGER.info('Unexpectedly absent jira connection' +
+                        str(type(self)) + ' :: ' + str(id(self)))
+            self.jira = self.server_login()
+        else:
+            LOGGER.info('JIRA Server login appears to have succeded already.')
+
+        inquiry = self.jira.search_issues('status != Resolved '
+                                          'ORDER BY priority desc, duedate asc, creationdate asc)
+        if inquiry.total < 1:
+            self.speak("No unresolved issues found!")
+        else:
+            thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
+            self.speak("The highest priority issue is " +
+                       self.project_key + '-' + str(issue_id) +
+                       "regarding: " + re.sub('([fF][wW]:)+', '', thissue.fields.summary))
 
 
     def handle_issue_status_intent(self, message):
