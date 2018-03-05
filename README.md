@@ -8,7 +8,7 @@ Once configured to connect to your on-premises Atlassian JIRA server with a dedi
 * "Mycroft, how many JIRA issues are open?"
 * "Mycroft, how many open JIRA issues are overdue?"
 * "Mycroft, JIRA status report!"
-* "Mycroft, raise a new JIRA service request for computer monitor replacement"
+* __^planned for future:^ {color:grey}"Mycroft, raise a new JIRA service request for computer monitor replacement"{color}__
 * "Mycroft, what is the status for issue 22333?"
 * "Mycroft, how can I contact help desk staff?"
 
@@ -36,3 +36,4 @@ https://github.com/MycroftAI		https://mycroft.ai/
 
 https://github.com/pycontribs/jira	https://pypi.python.org/pypi/jira/
 
+https://www.atlassian.com/software/jira
