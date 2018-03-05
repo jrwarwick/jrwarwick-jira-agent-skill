@@ -334,14 +334,16 @@ class JIRASkill(MycroftSkill):
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
         inquiry = self.jira.search_issues('status != Resolved '
-                                          'ORDER BY priority desc, duedate asc, creatdDate asc')
+                                          'ORDER BY priority desc, duedate asc, createdDate asc')
         if inquiry.total < 1:
             self.speak("No unresolved issues found!")
         else:
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
-            self.speak("The highest priority issue is " +
-                       self.project_key + '-' + str(issue_id) +
+            self.speak("The highest priority issue is " + str(thissue.key) +
                        "regarding: " + re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+                       # TODO: strip the proj key prefix, if skill prefs
+                       #       indicate to do so
+                       #       str(thissue.key).replace(self.project_key + '-', '') 
 
 
     def handle_issue_status_intent(self, message):
