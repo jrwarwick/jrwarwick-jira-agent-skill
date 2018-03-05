@@ -63,9 +63,11 @@ class JIRASkill(MycroftSkill):
         self.jira = None
         self.project_key = None
 
-    # Establish basic login via jira package interface (RESTful API)
-    # RETURN the connection object.
     def server_login(self):
+        """Establish basic login via jira package interface (RESTful API)
+
+        RETURN the connection object.
+        """
         new_jira_connection = None
         try:
             # TODO: revisit this. null/none/"" ?
@@ -123,32 +125,36 @@ class JIRASkill(MycroftSkill):
 
         return new_jira_connection
 
-    # Determine project key (prefix to issue IDs)
-    # RETURN string which is project key
-    def get_jira_project(self):
-            # Probably a bit sloppy to just take the first project from a list
-            # but this skill is oriented around a single-project Servie Desk
-            # only type install. Caveat Emptor or something.
-            # LOGGER.debug("--SELF reveal: " + str(type(self)) + " | " +
-            #             str(id(self)) + "  |  " + str(self.__dict__.keys()) )
-            return self.jira.projects()[0].key
 
-    # TODO: a helper function to collect together clean-ups for summary line
-    # i.e., since people are sometimes careless and lazy with
-    # email subject lines and sending an email in to an automated handler
-    # is a common way of raising JIRA issues, we see lots of cruft in the
-    # summary lines such as FW: and RE:
-    # just have a single standard, flexible inline-string-cleaner. 
+    def get_jira_project(self):
+        """Determine JIRA project key (for autoamtic prefix to issue IDs)
+
+        RETURN string which is project key
+        """
+        # Probably a bit sloppy to just take the first project from a list
+        # but this skill is oriented around a single-project Servie Desk
+        # only type install. Caveat Emptor or something.
+        # LOGGER.debug("--SELF reveal: " + str(type(self)) + " | " +
+        #             str(id(self)) + "  |  " + str(self.__dict__.keys()) )
+        return self.jira.projects()[0].key
+
+    # TODO: a helper function to collect together clean-ups for issue
+    # record summary line. i.e., since people are sometimes careless and
+    # lazy with email subject lines and sending an email in to an 
+    # automated handler is a common way of raising JIRA issues, we see
+    # lots of cruft in the summary lines such as FW: and RE:
+    # just have a single standard, flexible inline-string-cleaner.
     # but be careful not to have false positives like:
     #    Require: diagrams and software
     # re.sub('([fF][wW]:)+', '', blocker.fields.summary))
     # re.sub('(^\s*)[rR][eE]:', '', blocker.fields.summary))
 
-
-    # Accept a datetime (or parsable string representation of same) as "then"
-    # to compare with an evaluated now.
-    # RETURN string which is a speakable, natural clause of form "X days ago"
     def descriptive_past(self, then):
+        """Accept a datetime (or parsable string representation of same) as "then"
+        to compare with an evaluated now.
+        
+        RETURN string which is a speakable, natural clause of form "X days ago"
+        """
         # is this "overloading" method pythonic? and/or "GoodProgramming(R)TM"?
         if isinstance(then, basestring):
             then = dateutil.parser.parse(then)
@@ -157,19 +163,24 @@ class JIRASkill(MycroftSkill):
         ago = datetime.datetime.now(then.tzinfo) - then
         cronproximate = ''
         # TODO: handle negatives, or rather when then is in the future.
+        # TODO: a bit about crossing day boundaries if 22 hours etc ago
         if ago.days == 0:
-            # TODO: a bit about crossing day boundaries if 22 hours etc ago
-            cronproximate = 'today.'
-            # TODO: a bit with less than 60 minutes (3600 sec) is VERY RECENT subcase
-            # TODO: add a "just minutes ago" subsubcase
-            # TODO: add a "late last night" subcase
+            if ago.seconds < 1500:
+                cronproximate = 'just minutes ago.'
+            elif aog.seconds < 7200:
+                cronproximate = 'today, very recently.'
+            # TODO: add a elif "late last night" subcase
+            else:
+                cronproximate = 'today.'
         else:
             cronproximate = str(ago.days) + ' days ago.'
         return cronproximate
 
-    # This method loads the files needed for the skill's functioning, and
-    # creates and registers each intent that the skill uses
+
     def initialize(self):
+        """This method loads the files needed for the skill's functioning, and
+        creates and registers each intent that the skill uses
+        """
         self.load_data_files(dirname(__file__))
 
         status_report_intent = IntentBuilder("StatusReportIntent").\
@@ -187,6 +198,11 @@ class JIRASkill(MycroftSkill):
             require("IssueRecordsKeyword").require("OverdueKeyword").build()
         self.register_intent(issues_overdue_intent,
                              self.handle_issues_overdue_intent)
+
+        most_urgent_issue_intent = IntentBuilder("MostUrgentIssueIntent").\
+            require("MostUrgentKeyword").require("IssueRecordKeyword").build()
+        self.register_intent(most_urgent_issue_intent,
+                             self.handle_most_urgent_issue)
 
         issue_status_intent = IntentBuilder("IssueStatusIntent").\
             require("IssueStatusKeyword").build()
@@ -210,13 +226,9 @@ class JIRASkill(MycroftSkill):
         LOGGER.info("JIRA project key set to '" + self.project_key + "'.")
 
 
-    # The "handle_xxxx_intent" functions define Mycroft's behavior when
-    # each of the skill's intents is triggered: in this case, he simply
-    # speaks a response. Note that the "speak_dialog" method doesn't
-    # actually speak the text it's passed--instead, that text is the filename
-    # of a file in the dialog folder, and Mycroft speaks its contents when
-    # the method is called.
     def handle_status_report_intent(self, message):
+        """Handle intent for a general, overall service desk status report.
+        """
         if self.jira is None:
             LOGGER.info('____' + str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
@@ -281,9 +293,11 @@ class JIRASkill(MycroftSkill):
             self.speak("Highest priority unresolved issue is regarding: " +
                        re.sub('([fF][wW]:)+', '', thissue.fields.summary))
 
+
     def handle_issues_overdue_intent(self, message):
         if self.jira is None:
-            LOGGER.info('____' + str(type(self)) + ' :: ' + str(id(self)))
+            LOGGER.info('Unexpectedly absent jira connection' +
+                        str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
@@ -300,9 +314,35 @@ class JIRASkill(MycroftSkill):
             self.speak("Most overdue issue is regarding: " +
                        re.sub('([fF][wW]:)+', '', thissue.fields.summary))
 
+
     # TODO: def handle_how_many_open_high_priority_issues(self, message):
     # TODO: def handle_how_many_vip_issues(self, message):
-    # TODO: def handle_most_urgent_issue(self, message):
+    # TODO: def handle_how_many_queue_issues(self, message):
+        # stats on named queues. JIRA comes seeded with a few,
+        # but make it a param
+
+
+    def handle_most_urgent_issue(self, message):
+        # this one might need a little more special sauce to it.
+        # does something overdue at medium priority exceed
+        # explicit high priority? Do we account for VIP factor?
+        if self.jira is None:
+            LOGGER.info('Unexpectedly absent jira connection' +
+                        str(type(self)) + ' :: ' + str(id(self)))
+            self.jira = self.server_login()
+        else:
+            LOGGER.info('JIRA Server login appears to have succeded already.')
+
+        inquiry = self.jira.search_issues('status != Resolved '
+                                          'ORDER BY priority desc, duedate asc, creationdate asc)
+        if inquiry.total < 1:
+            self.speak("No unresolved issues found!")
+        else:
+            thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
+            self.speak("The highest priority issue is " +
+                       self.project_key + '-' + str(issue_id) +
+                       "regarding: " + re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+
 
     def handle_issue_status_intent(self, message):
         # TODO: flexibly, and somewhat reliably  detect if user
@@ -323,7 +363,7 @@ class JIRASkill(MycroftSkill):
 
         issue_id = self.get_response(dialog='specify.issue',
                                      validator=issue_id_validator,
-                                     on_fail=valid_issue_id_desc, num_retries=3 )
+                                     on_fail=valid_issue_id_desc, num_retries=3)
         issue_id = re.sub(r'\s+', '', issue_id)
         LOGGER.info('Attempted issue_id understanding:  "' + issue_id + '"')
         # TODO if this issue has/had a blocking issue: then examine that issue
@@ -340,7 +380,8 @@ class JIRASkill(MycroftSkill):
                     if issue.fields.duedate is not None:
                         then = dateutil.parser.parse(issue.fields.duedate)
                         if then.tzinfo is None:
-                            then = datetime.datetime(then.year, then.month, then.day, tzinfo=tzlocal())
+                            then = datetime.datetime(then.year, then.month,
+                                                     then.day, tzinfo=tzlocal())
                         ago = datetime.datetime.now(then.tzinfo) - then
                         cronproximate = ''
                         if ago.days < 0:
@@ -386,16 +427,15 @@ class JIRASkill(MycroftSkill):
                     if isinstance(then, basestring):
                         then = dateutil.parser.parse(then)
                     if then.tzinfo is None:
-                        then = datetime.datetime(then.year, then.month, then.day, tzinfo=tzlocal())
+                        then = datetime.datetime(then.year, then.month,
+                                                 then.day, tzinfo=tzlocal())
                     if then.year == datetime.datetime.now(then.tzinfo).year:
                         ago = datetime.datetime.now(then.tzinfo) - then
                         if ago.days < 7:
                             self.speak(" just last " + then.strftime('%A'))
                         self.speak(" on " + then.strftime('%B %d'))
                     else:
-                        self.speak(" on " + then.strftime('%B %d %Y'))
-                        
-                    
+                        self.speak(" on " + then.strftime('%B %d %Y'))                                           
             except Exception:
                 self.speak("Search for further details on the issue record "
                            "failed. Sorry.")
@@ -404,12 +444,18 @@ class JIRASkill(MycroftSkill):
             self.speak('I am afraid that is not a valid issue id number '
                        'or perhaps I misunderstood.')
 
+
     def handle_raise_issue_intent(self, message):
-        # TODO: pull from settings, but also have some kind of fallback, else.
+        """Collect enough information to create an issue record,
+        then use the JIRA web API to create the issue record.
+        """
         self.speak('Unfortunately, I do not yet have the ability to file ' +
                    'an issue record by myself.')
+        # Should line 416 - 435 just be a call to the function
+        # handle_contact_info_intent?
         telephone_number = self.settings.get("support_telephone", "")
-        # TODO check and fallback on telephone number
+        # TODO: pull from settings, but also have some kind of fallback.
+        # check and fallback on telephone number
 
         email_address = ' '.join(list(self.settings.get("support_email", "")))
         email_address = email_address.replace('.', 'dot')
@@ -427,15 +473,17 @@ class JIRASkill(MycroftSkill):
         self.enclosure.activate_mouth_events()
         self.enclosure.mouth_reset()
 
+        # TODO: real raise issue implementation steps:
         # Establish requestor identity
         # Get brief general description
         # Get priority
         # Make a quick search through open
         # (and perhaps very recently closed) issues,
-        #    is this a duplicate issue?
-        # Create Issue, read out ticket key/ID (also print it out,
-        # if printer attached;
-        #    also IM tech staff, if high priority)
+        #   is this a duplicate issue?
+        # Create Issue, display and read out ticket key/ID 
+        #   (also print it out, if printer attached);
+        #   also IM tech staff, if high priority {and IM capability})
+
 
     def handle_contact_info_intent(self, message):
         telephone_number = self.settings.get("support_telephone", "")
@@ -452,15 +500,18 @@ class JIRASkill(MycroftSkill):
         self.enclosure.activate_mouth_events()
         self.enclosure.mouth_reset()
 
-    # The "stop" method defines what Mycroft does when told to stop during
-    # the skill's execution. In this case, since the skill's functionality
-    # is extremely simple, the method just contains the keyword "pass", which
-    # does nothing.
+
     def stop(self):
+        """The "stop" method defines what Mycroft does when told to stop during
+        the skill's execution. In this case, since the skill's functionality
+        is extremely simple, the method just contains the keyword "pass", which
+        does nothing.
+        """
         pass
 
 
-# The "create_skill()" method is used to create an instance of the skill.
-# Note that it's outside the class itself.
 def create_skill():
+    """The "create_skill()" method is used to create an instance of the skill.
+    Note that it's outside the class itself.
+    """
     return JIRASkill()
