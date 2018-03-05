@@ -340,10 +340,13 @@ class JIRASkill(MycroftSkill):
         else:
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("The highest priority issue is " + str(thissue.key) +
-                       "regarding: " + re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+                       " regarding: " + re.sub('([fF][wW]:)+', '', thissue.fields.summary))
                        # TODO: strip the proj key prefix, if skill prefs
                        #       indicate to do so
                        #       str(thissue.key).replace(self.project_key + '-', '') 
+        # TODO: now establish Context so that if user follows up with: 
+        #  "when is that issue due?" or "who reported this issue?"  or "how long ago was this reported?!"
+        #  we can give real, useful, accurate, pertinent answers.
 
 
     def handle_issue_status_intent(self, message):
