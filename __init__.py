@@ -334,7 +334,7 @@ class JIRASkill(MycroftSkill):
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
         inquiry = self.jira.search_issues('status != Resolved '
-                                          'ORDER BY priority desc, duedate asc, creationdate asc)
+                                          'ORDER BY priority desc, duedate asc, creatdDate asc')
         if inquiry.total < 1:
             self.speak("No unresolved issues found!")
         else:
