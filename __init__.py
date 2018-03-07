@@ -1,4 +1,4 @@
-# Copyright 2018 Justin Warwick and Mycroft AI, Inc.
+# Copyright 2018 Justin Warwick
 #
 # This file is an extension to Mycroft Core.
 #
@@ -14,12 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Mycroft Core.  If not, see <http://www.gnu.org/licenses/>.
-
-
-# Visit https://docs.mycroft.ai/skill.creation for more detailed information
-# on the structure of this skill and its containing folder, as well as
-# instructions for designing your own skill based on this template.
-
 
 # Import statements: the list of outside modules you'll be using in your
 # skills, whether from other files in mycroft-core or from external libraries
@@ -140,7 +134,7 @@ class JIRASkill(MycroftSkill):
 
     # TODO: a helper function to collect together clean-ups for issue
     # record summary line. i.e., since people are sometimes careless and
-    # lazy with email subject lines and sending an email in to an 
+    # lazy with email subject lines and sending an email in to an
     # automated handler is a common way of raising JIRA issues, we see
     # lots of cruft in the summary lines such as FW: and RE:
     # just have a single standard, flexible inline-string-cleaner.
@@ -334,18 +328,20 @@ class JIRASkill(MycroftSkill):
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
         inquiry = self.jira.search_issues('status != Resolved '
-                                          'ORDER BY priority desc, duedate asc, createdDate asc')
+                                          'ORDER BY priority desc, duedate asc,'
+                                          'createdDate asc')
         if inquiry.total < 1:
             self.speak("No unresolved issues found!")
         else:
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("The highest priority issue is " + str(thissue.key) +
                        " regarding: " + re.sub('([fF][wW]:)+', '', thissue.fields.summary))
-                       # TODO: strip the proj key prefix, if skill prefs
-                       #       indicate to do so
-                       #       str(thissue.key).replace(self.project_key + '-', '') 
-        # TODO: now establish Context so that if user follows up with: 
-        #  "when is that issue due?" or "who reported this issue?"  or "how long ago was this reported?!"
+                    # TODO: strip the proj key prefix, if skill prefs
+                    #     indicate to do so
+                    #     str(thissue.key).replace(self.project_key + '-', '')
+        # TODO: now establish Context so that if user follows up with:
+        #  "when is that issue due?" or "who reported this issue?"  or
+        #  "how long ago was this reported?!"
         #  we can give real, useful, accurate, pertinent answers.
 
 
@@ -415,7 +411,7 @@ class JIRASkill(MycroftSkill):
                         blocker = issue.fields.issuelinks[0].inwardIssue
                         if blocker.fields.status.name.lower() != 'resolved':
                             #TODO: consider dialog file for this one
-                            self.speak('Also note taht this issue is currently '
+                            self.speak('Also note that this issue is currently '
                                        'blocked by outstanding issue ' +
                                        blocker.key + ' ' +
                                        re.sub('([fF][wW]:)+', '', blocker.fields.summary))
@@ -423,8 +419,8 @@ class JIRASkill(MycroftSkill):
                     self.speak("This issue is already resolved. ")
                     self.speak(issue.fields.resolution.description)
                     # TODO: "about" should be conditional, 
-                    #       descript-past might be "Today". In that case the specific date
-                    #                     below would also be unneeded.
+                    #     descript-past might be "Today". In that case
+                    #     the specific date below would also be unneeded.
                     self.speak(" about " + self.descriptive_past(issue.fields.resolutiondate))
                     # give nice, short form of specific date if in in current year, 
                     # or "January 21st, 2018" if outside of current year.
