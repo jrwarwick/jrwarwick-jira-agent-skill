@@ -1,7 +1,7 @@
 {
-  "utterance": "what is the status for issue 100",
-  "intent_type": "IssueStatusIntent",
+  "utterance": "what is the most urgent service desk issue",
+  "intent_type": "MostUrgentIssueIntent",
   "intent": {
-    "IssueStatusKeyword": "issue status"
+    "MostUrgentKeyword": "most urgent"
   }
 }

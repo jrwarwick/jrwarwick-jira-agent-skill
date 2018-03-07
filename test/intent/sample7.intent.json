@@ -1,0 +1,7 @@
+{
+  "utterance": "how can I contact help desk staff",
+  "intent_type": "ContactInfoIntent",
+  "intent": {
+    "ServiceDeskStaffKeyword": "help desk staff"
+  }
+}

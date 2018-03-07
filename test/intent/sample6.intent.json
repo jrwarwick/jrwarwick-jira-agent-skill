@@ -1,7 +1,7 @@
 {
-  "utterance": "how can I contact help desk staff",
-  "intent_type": "ContactInfoIntent",
+  "utterance": "what is the status for issue 100",
+  "intent_type": "IssueStatusIntent",
   "intent": {
-    "ServiceDeskStaffKeyword": "help desk staff"
+    "IssueStatusKeyword": "issue status"
   }
 }
