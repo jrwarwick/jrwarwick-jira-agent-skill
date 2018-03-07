@@ -1,7 +1,7 @@
 {
-  "utterance": "Hello world",
-  "intent_type": "HelloWorldIntent",
+  "utterance": "jira status report",
+  "intent_type": "StatusReportIntent",
   "intent": {
-    "HelloWorldKeyword": "hello world"
+    "StatusReportKeyword": "jira status"
   }
 }

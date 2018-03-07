@@ -1,7 +1,7 @@
 {
-  "utterance": "service desk status report",
-  "intent_type": "StatusReportIntent",
+  "utterance": "how can I contact help desk staff",
+  "intent_type": "ContactInfoIntent",
   "intent": {
-    "StatusReportKeyword": "service desk status report"
+    "ServiceDeskStaffKeyword": "help desk staff"
   }
 }

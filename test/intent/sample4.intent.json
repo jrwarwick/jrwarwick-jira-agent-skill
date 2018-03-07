@@ -1,7 +1,7 @@
 {
-  "utterance": "Greetings",
-  "intent_type": "HelloWorldIntent",
+  "utterance": "raise a new JIRA service request",
+  "intent_type": "RaiseIssueIntent",
   "intent": {
-    "HelloWorldKeyword": "greetings"
+    "RaiseKeyword": "raise"
   }
 }

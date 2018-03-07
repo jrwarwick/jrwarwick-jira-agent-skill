@@ -1,7 +1,7 @@
 {
-  "utterance": "give me a jira status report",
-  "intent_type": "StatusReportIntent",
+  "utterance": "what is the status for issue 100",
+  "intent_type": "IssueStatusIntent",
   "intent": {
-    "StatusReportKeyword": "JIRA status report"
+    "IssueStatusKeyword": "issue status"
   }
 }
