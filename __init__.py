@@ -132,16 +132,22 @@ class JIRASkill(MycroftSkill):
         #             str(id(self)) + "  |  " + str(self.__dict__.keys()) )
         return self.jira.projects()[0].key
 
-    # TODO: a helper function to collect together clean-ups for issue
-    # record summary line. i.e., since people are sometimes careless and
-    # lazy with email subject lines and sending an email in to an
-    # automated handler is a common way of raising JIRA issues, we see
-    # lots of cruft in the summary lines such as FW: and RE:
-    # just have a single standard, flexible inline-string-cleaner.
-    # but be careful not to have false positives like:
-    #    Require: diagrams and software
-    # re.sub('([fF][wW]:)+', '', blocker.fields.summary))
-    # re.sub('(^\s*)[rR][eE]:', '', blocker.fields.summary))
+    def clean_summary(self, summary_text):
+        """Accept a string which is a typical issue record summary text
+        which, if coming from a mail thread subject line, needs cleaning.
+
+        RETURN string that is cleaned up of cruft and maybe even a few
+        common mispronunciations/abbreviations expanded.
+        """
+        # since people are sometimes careless and lazy with email subject lines
+        # and sending an email in to an automated handler is a common way of 
+        # raising JIRA issues, we see lots of cruft in the summary lines 
+        # such as FW: and RE:
+        # just have a single standard, flexible inline-string-cleaner.
+        # but be careful not to have false positives like:
+        #    Require: diagrams and software
+        return re.sub("^(([Ff][Ww]:|[Rr][Ee]:) *)*"," ", summary_text.strip())
+
 
     def descriptive_past(self, then):
         """Accept a datetime (or parsable string representation of same) as "then"
@@ -240,7 +246,7 @@ class JIRASkill(MycroftSkill):
                        " found in the unassigned queue.")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Latest issue is regarding: " +
-                       re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+                       self.clean_summary(thissue.fields.summary))
 
         inquiry = self.jira.search_issues('status != Resolved AND '
                                           'duedate < now() '
@@ -252,7 +258,7 @@ class JIRASkill(MycroftSkill):
                        " overdue!")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Most overdue issue is regarding: " +
-                       re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+                       self.clean_summary(thissue.fields.summary))
 
         inquiry = self.jira.search_issues('resolution = Unresolved '
                                           'AND priority > Medium '
@@ -265,7 +271,7 @@ class JIRASkill(MycroftSkill):
                        " remain" + ('s', '')[inquiry.total > 1] + " open!")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Highest priority issue is regarding: " +
-                       re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+                       self.clean_summary(thissue.fields.summary))
         # TODO: SLAs breached or nearly so, if you have that sort of thing.
 
 
@@ -285,7 +291,7 @@ class JIRASkill(MycroftSkill):
                        " remain unresolved.")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Highest priority unresolved issue is regarding: " +
-                       re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+                       self.clean_summary(thissue.fields.summary))
 
 
     def handle_issues_overdue_intent(self, message):
@@ -306,7 +312,7 @@ class JIRASkill(MycroftSkill):
                        " overdue!")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Most overdue issue is regarding: " +
-                       re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+                       self.clean_summary(thissue.fields.summary))
 
 
     # TODO: def handle_how_many_open_high_priority_issues(self, message):
@@ -335,7 +341,7 @@ class JIRASkill(MycroftSkill):
         else:
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("The highest priority issue is " + str(thissue.key) +
-                       " regarding: " + re.sub('([fF][wW]:)+', '', thissue.fields.summary))
+                       " regarding: " + self.clean_summary(thissue.fields.summary))
                     # TODO: strip the proj key prefix, if skill prefs
                     #     indicate to do so
                     #     str(thissue.key).replace(self.project_key + '-', '')
@@ -375,7 +381,7 @@ class JIRASkill(MycroftSkill):
                        self.project_key + '-' + str(issue_id))
             try:
                 issue = self.jira.issue(self.project_key + '-' + str(issue_id))
-                self.speak(re.sub('([fF][wW]:)+', '', issue.fields.summary))
+                self.speak(self.clean_summary(issue.fields.summary))
                 if issue.fields.resolution is None:
                     self.speak(" is not yet resolved.")
                     if issue.fields.duedate is not None:
@@ -410,11 +416,11 @@ class JIRASkill(MycroftSkill):
                         issue.fields.issuelinks[0].type.name.lower() == 'blocks'):
                         blocker = issue.fields.issuelinks[0].inwardIssue
                         if blocker.fields.status.name.lower() != 'resolved':
-                            #TODO: consider dialog file for this one
+                            # TODO: consider dialog file for this one
                             self.speak('Also note that this issue is currently '
                                        'blocked by outstanding issue ' +
                                        blocker.key + ' ' +
-                                       re.sub('([fF][wW]:)+', '', blocker.fields.summary))
+                                       self.clean_summary(blocker.fields.summary))
                 else:
                     self.speak("This issue is already resolved. ")
                     self.speak(issue.fields.resolution.description)
