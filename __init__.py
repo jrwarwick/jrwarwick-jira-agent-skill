@@ -74,7 +74,8 @@ class JIRASkill(MycroftSkill):
                 # get_intro_message(self)  in docs. So, TODO-one-day?
                 self.speak("Please navigate to home.mycroft.ai to establish "
                            "or complete JIRA Service Desk server access "
-                           "configuration.")
+                           "configuration.") 
+                # phrase is slightly different than home.configuration.prompt                
         except Exception:
             LOGGER.exception('Error while trying to retrieve skill settings.')
         try:
@@ -91,9 +92,7 @@ class JIRASkill(MycroftSkill):
                 self.speak("It seems that you have specified an invalid "
                            "server URL. A valid server URL must include "
                            "the h t t p colon slash slash prefix.")
-                self.speak("Please navigate to home.mycroft.ai "
-                           "to amend or update the JIRA Service Desk "
-                           "server access configuration.")
+                self.speak_dialog("home.configuration.prompt")
                 raise ValueError('server_url contained invalid URL, missing '
                                  'correct prefix: {server_url}'
                                  .format(server_url=repr(server_url)))
@@ -102,9 +101,8 @@ class JIRASkill(MycroftSkill):
                            "path in the server URL. This should work fine. "
                            "However, if the API is upgraded, you may need to "
                            "update my record of the endpoint URL.")
-                self.speak("Please navigate to home.mycroft.ai "
-                           "to amend or update the JIRA Service Desk "
-                           "server access configuration.")
+                self.speak_dialog("home.configuration.prompt")
+                self.speak("If deemed necessary.")
             else:
                 if server_url[-1:] != '/':
                     server_url = server_url + '/'
