@@ -132,6 +132,7 @@ class JIRASkill(MycroftSkill):
         #             str(id(self)) + "  |  " + str(self.__dict__.keys()) )
         return self.jira.projects()[0].key
 
+
     def clean_summary(self, summary_text):
         """Accept a string which is a typical issue record summary text
         which, if coming from a mail thread subject line, needs cleaning.
@@ -140,19 +141,19 @@ class JIRASkill(MycroftSkill):
         common mispronunciations/abbreviations expanded.
         """
         # since people are sometimes careless and lazy with email subject lines
-        # and sending an email in to an automated handler is a common way of 
-        # raising JIRA issues, we see lots of cruft in the summary lines 
+        # and sending an email in to an automated handler is a common way of
+        # raising JIRA issues, we see lots of cruft in the summary lines
         # such as FW: and RE:
         # just have a single standard, flexible inline-string-cleaner.
         # but be careful not to have false positives like:
         #    Require: diagrams and software
-        return re.sub("^(([Ff][Ww]:|[Rr][Ee]:) *)*"," ", summary_text.strip())
+        return re.sub("^(([Ff][Ww]:|[Rr][Ee]:) *)*", " ", summary_text.strip())
 
 
     def descriptive_past(self, then):
         """Accept a datetime (or parsable string representation of same) as "then"
         to compare with an evaluated now.
-        
+
         RETURN string which is a speakable, natural clause of form "X days ago"
         """
         # is this "overloading" method pythonic? and/or "GoodProgramming(R)TM"?
@@ -427,9 +428,11 @@ class JIRASkill(MycroftSkill):
                     # TODO: "about" should be conditional, 
                     #     descript-past might be "Today". In that case
                     #     the specific date below would also be unneeded.
-                    self.speak(" about " + self.descriptive_past(issue.fields.resolutiondate))
-                    # give nice, short form of specific date if in in current year, 
-                    # or "January 21st, 2018" if outside of current year.
+                    self.speak(" about " +
+                               self.descriptive_past(issue.fields.resolutiondate))
+                    # give nice, short form of specific date if within
+                    # current year, or "January 21st, 2018" if outside
+                    # of current year.
                     then = issue.fields.resolutiondate
                     if isinstance(then, basestring):
                         then = dateutil.parser.parse(then)
@@ -442,7 +445,7 @@ class JIRASkill(MycroftSkill):
                             self.speak(" just last " + then.strftime('%A'))
                         self.speak(" on " + then.strftime('%B %d'))
                     else:
-                        self.speak(" on " + then.strftime('%B %d %Y'))                                           
+                        self.speak(" on " + then.strftime('%B %d %Y'))
             except Exception:
                 self.speak("Search for further details on the issue record "
                            "failed. Sorry.")
@@ -487,7 +490,7 @@ class JIRASkill(MycroftSkill):
         # Make a quick search through open
         # (and perhaps very recently closed) issues,
         #   is this a duplicate issue?
-        # Create Issue, display and read out ticket key/ID 
+        # Create Issue, display and read out ticket key/ID
         #   (also print it out, if printer attached);
         #   also IM tech staff, if high priority {and IM capability})
 
