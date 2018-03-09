@@ -162,9 +162,13 @@ class JIRAagentSkill(MycroftSkill):
             then = datetime.datetime(then.year, then.month, then.day, tzinfo=tzlocal())
         ago = datetime.datetime.now(then.tzinfo) - then
         cronproximate = ''
-        # TODO: handle negatives, or rather when then is in the future.
         # TODO: a bit about crossing day boundaries if 22 hours etc ago
-        if ago.days == 0:
+        if ago.seconds < 0 or ago.days < 0:
+            # TODO: better handle negatives, or rather when then is in the future.
+            if ago.seconds > -14400:
+                cronproximate = 'in the future, very soon.'
+            cronproximate = 'in the future.'
+        elif ago.days == 0:
             if ago.seconds < 1500:
                 cronproximate = 'just minutes ago.'
             elif ago.seconds < 7200:
@@ -491,6 +495,9 @@ class JIRAagentSkill(MycroftSkill):
         #   is this a duplicate issue?
         # Create Issue, display and read out ticket key/ID
         #   (also print it out, if printer attached);
+        #   set_context() on issue id so if user immediately
+        #     afterward want to adjust or get warm fuzzy about it
+        #     they can just use pronouns and stuff.
         #   also IM tech staff, if high priority {and IM capability})
 
 
