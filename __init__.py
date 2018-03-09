@@ -375,6 +375,10 @@ class JIRAagentSkill(MycroftSkill):
         issue_id = self.get_response(dialog='specify.issue',
                                      validator=issue_id_validator,
                                      on_fail=valid_issue_id_desc, num_retries=3)
+        if not isinstance(issue_id, basestring):
+            LOGGER.debug('issue_id is ' + str(type(issue_id)))
+        if issue_id is None:
+            LOGGER.exception('No valid issue_id from get_response. Better to bail out now.')
         issue_id = re.sub(r'\s+', '', issue_id)
         LOGGER.info('Attempted issue_id understanding:  "' + issue_id + '"')
         # TODO if this issue has/had a blocking issue: then examine that issue
