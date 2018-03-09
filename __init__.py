@@ -43,7 +43,7 @@ LOGGER = getLogger(__name__)
 # "class ____Skill(MycroftSkill)"
 
 
-class JIRASkill(MycroftSkill):
+class JIRAagentSkill(MycroftSkill):
     # Constants from the core IP skill
     SEC_PER_LETTER = 0.65  # timing based on Mark 1 screen
     LETTERS_PER_SCREEN = 9.0
@@ -53,7 +53,7 @@ class JIRASkill(MycroftSkill):
 
     # The constructor of the skill, which calls MycroftSkill's constructor
     def __init__(self):
-        super(JIRASkill, self).__init__(name="JIRASkill")
+        super(JIRAagentSkill, self).__init__(name="JIRAagentSkill")
         self.jira = None
         self.project_key = None
 
@@ -78,6 +78,7 @@ class JIRASkill(MycroftSkill):
                 # phrase is slightly different than home.configuration.prompt                
         except Exception:
             LOGGER.exception('Error while trying to retrieve skill settings.')
+            return None
         try:
             # Would a config fallback be appropriate?
             #   jira = JIRA(server=os.environ['JIRA_SERVER_URL'],
@@ -522,4 +523,4 @@ def create_skill():
     """The "create_skill()" method is used to create an instance of the skill.
     Note that it's outside the class itself.
     """
-    return JIRASkill()
+    return JIRAagentSkill()
