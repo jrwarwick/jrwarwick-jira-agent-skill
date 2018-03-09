@@ -76,6 +76,7 @@ class JIRAagentSkill(MycroftSkill):
                            "or complete JIRA Service Desk server access "
                            "configuration.") 
                 # phrase is slightly different than home.configuration.prompt                
+	        return None
         except Exception:
             LOGGER.exception('Error while trying to retrieve skill settings.')
             return None
@@ -91,7 +92,7 @@ class JIRAagentSkill(MycroftSkill):
             if (server_url[0:7].lower() != 'http://' and
                 server_url[0:8].lower() != 'https://'):
                 self.speak("It seems that you have specified an invalid "
-                           "server URL. A valid server URL must include "
+                           "server U-R-L. A valid server U-R-L must include "
                            "the h t t p colon slash slash prefix.")
                 self.speak_dialog("home.configuration.prompt")
                 raise ValueError('server_url contained invalid URL, missing '
@@ -114,7 +115,8 @@ class JIRAagentSkill(MycroftSkill):
                                                    self.settings.get("password", ""))
                                        )
         except Exception:
-            LOGGER.exception('JIRA Server connection failure!')            
+            LOGGER.exception('JIRA Server connection failure! (url=' + server_url)            
+            return None
 
         return new_jira_connection
 
@@ -236,6 +238,12 @@ class JIRAagentSkill(MycroftSkill):
         if self.jira is None:
             LOGGER.info('____' + str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
+            if self.jira is None:
+                LOGGER.debug('self.jira server connection is None. '
+                                 + 'Cannot proceed without server connection.')
+                self.speak('My apologies, but I could not get a connection to '
+                           'the JIRA server. Report request cannot be fulfilled.')
+                return None
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
