@@ -166,7 +166,7 @@ class JIRASkill(MycroftSkill):
         if ago.days == 0:
             if ago.seconds < 1500:
                 cronproximate = 'just minutes ago.'
-            elif aog.seconds < 7200:
+            elif ago.seconds < 7200:
                 cronproximate = 'today, very recently.'
             # TODO: add a elif "late last night" subcase
             else:
