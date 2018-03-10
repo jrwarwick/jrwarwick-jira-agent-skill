@@ -9,7 +9,7 @@
                         "name": "url",
                         "type": "text",
                         "label": "Server API URL base",
-                        "value": "http://bakjira01.int.bry.com:8080/",
+                        "value": "",
                         "placeholder": "http://serverhost.domain.tld:8080/"
                     }
                 ]
@@ -25,7 +25,7 @@
                         "name": "username",
                         "type": "text",
                         "label": "Username",
-                        "value": "jrw"
+                        "value": ""
                     },
                     {
                         "name": "password",
