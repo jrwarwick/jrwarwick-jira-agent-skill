@@ -76,7 +76,7 @@ class JIRAagentSkill(MycroftSkill):
                            "or complete JIRA Service Desk server access "
                            "configuration.") 
                 # phrase is slightly different than home.configuration.prompt                
-	        return None
+            return None
         except Exception:
             LOGGER.exception('Error while trying to retrieve skill settings.')
             return None
@@ -115,7 +115,7 @@ class JIRAagentSkill(MycroftSkill):
                                                    self.settings.get("password", ""))
                                        )
         except Exception:
-            LOGGER.exception('JIRA Server connection failure! (url=' + server_url)            
+            LOGGER.exception('JIRA Server connection failure! (url=' + server_url)
             return None
 
         return new_jira_connection
@@ -166,7 +166,7 @@ class JIRAagentSkill(MycroftSkill):
         cronproximate = ''
         # TODO: a bit about crossing day boundaries if 22 hours etc ago
         if ago.seconds < 0 or ago.days < 0:
-            # TODO: better handle negatives, or rather when then is in the future.
+            # TODO: better handle negatives, i.e., when then is in the future.
             if ago.seconds > -14400:
                 cronproximate = 'in the future, very soon.'
             cronproximate = 'in the future.'
@@ -240,9 +240,9 @@ class JIRAagentSkill(MycroftSkill):
             self.jira = self.server_login()
             if self.jira is None:
                 LOGGER.debug('self.jira server connection is None. '
-                                 + 'Cannot proceed without server connection.')
-                self.speak('My apologies, but I could not get a connection to '
-                           'the JIRA server. Report request cannot be fulfilled.')
+                             'Cannot proceed without server connection.')
+                self.speak("My apologies, but I could not get a connection to "
+                           "the JIRA server. Report request cannot be fulfilled.")
                 return None
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
@@ -289,7 +289,7 @@ class JIRAagentSkill(MycroftSkill):
 
     def handle_issues_open_intent(self, message):
         if self.jira is None:
-            LOGGER.info('____' + str(type(self)) + ' :: ' + str(id(self)))
+            LOGGER.debug('____' + str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
@@ -386,7 +386,8 @@ class JIRAagentSkill(MycroftSkill):
         if not isinstance(issue_id, basestring):
             LOGGER.debug('issue_id is ' + str(type(issue_id)))
         if issue_id is None:
-            LOGGER.exception('No valid issue_id from get_response. Better to bail out now.')
+            LOGGER.exception('No valid issue_id from get_response. '
+                             'Better to bail out now.')
         issue_id = re.sub(r'\s+', '', issue_id)
         LOGGER.info('Attempted issue_id understanding:  "' + issue_id + '"')
         # TODO if this issue has/had a blocking issue: then examine that issue
@@ -413,18 +414,18 @@ class JIRAagentSkill(MycroftSkill):
                         elif ago.days == 0:
                             self.speak("This issue is due today!")
                         elif ago.days > 0:
-                            cronproximate = str(ago.days) + ' days.'
+                            cronproximate = str(ago.days) + " days."
                             self.speak("This issue is overdue by " + cronproximate)
                     if issue.fields.updated is None:
-                        self.speak('No recorded progress on this issue, yet.')
+                        self.speak("No recorded progress on this issue, yet.")
                     else:
                         cronproximate = self.descriptive_past(issue.fields.updated)
-                        self.speak('Record last updated ' + cronproximate)
-                    self.speak('Issue is at ' + issue.fields.priority.name +
-                               ' priority.')
+                        self.speak("Record last updated " + cronproximate)
+                    self.speak("Issue is at " + issue.fields.priority.name +
+                               " priority.")
                     if issue.fields.assignee is None:
-                        self.speak('And the issue has not yet been assigned '
-                                   'to a staff person.')
+                        self.speak("And the issue has not yet been assigned "
+                                   "to a staff person.")
                     # linked/related issues check. At least 'duplicates' and
                     # "blocks" although there is a little start here, making
                     # the bad assumption of only one link. a lot TODO here.
@@ -433,9 +434,9 @@ class JIRAagentSkill(MycroftSkill):
                         blocker = issue.fields.issuelinks[0].inwardIssue
                         if blocker.fields.status.name.lower() != 'resolved':
                             # TODO: consider dialog file for this one
-                            self.speak('Also note that this issue is currently '
-                                       'blocked by outstanding issue ' +
-                                       blocker.key + ' ' +
+                            self.speak("Also note that this issue is currently "
+                                       "blocked by outstanding issue " +
+                                       blocker.key + " " +
                                        self.clean_summary(blocker.fields.summary))
                 else:
                     self.speak("This issue is already resolved. ")
@@ -466,16 +467,16 @@ class JIRAagentSkill(MycroftSkill):
                            "failed. Sorry.")
                 LOGGER.exception('JIRA issue API error!')
         else:
-            self.speak('I am afraid that is not a valid issue id number '
-                       'or perhaps I misunderstood.')
+            self.speak("I am afraid that is not a valid issue id number "
+                       "or perhaps I misunderstood.")
 
 
     def handle_raise_issue_intent(self, message):
         """Collect enough information to create an issue record,
         then use the JIRA web API to create the issue record.
         """
-        self.speak('Unfortunately, I do not yet have the ability to file ' +
-                   'an issue record by myself.')
+        self.speak("Unfortunately, I do not yet have the ability to file " +
+                   "an issue record by myself.")
         # Should line 416 - 435 just be a call to the function
         # handle_contact_info_intent?
         telephone_number = self.settings.get("support_telephone", "")
@@ -514,10 +515,10 @@ class JIRAagentSkill(MycroftSkill):
 
 
     def handle_contact_info_intent(self, message):
-        telephone_number = self.settings.get("support_telephone", "")
+        telephone_number = self.settings.get('support_telephone', "")
         # TODO check and fallback on telephone number
         data = {'telephone_number': telephone_number,
-                'email_address': self.settings.get("support_email", "")}
+                'email_address': self.settings.get('support_email', "")}
         self.speak_dialog("human.contact.info", data)
 
         self.enclosure.deactivate_mouth_events()
