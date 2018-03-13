@@ -25,7 +25,7 @@ from mycroft.util.log import getLogger
 import mycroft.audio
 import mycroft.util
 
-from jira import JIRA
+from jira import JIRA, JIRAError
 import os
 import re
 import time
@@ -114,8 +114,25 @@ class JIRAagentSkill(MycroftSkill):
                                        basic_auth=(self.settings.get("username", ""),
                                                    self.settings.get("password", ""))
                                        )
-        except Exception:
+        except JIRAError as jerr:
+            LOGGER.exception('JIRA Server connection failure! ', 
+                             jerr.text, jerr.status_code)
+            if jerr.status_code == 403 and jerr.text.strip().startswith('CAPTCHA_CHALLENGE'):
+                msg = ("JIRA server Login was denied and a captcha requirement "
+                      "has been activated. Either login manually via web browser "
+                      "to clear it, or request an admin use the 'Reset failed "
+                      "login count' control in the User Management Module of "
+                      "the Administration console in JIRA.")
+                LOGGER.info(msg)
+                self.speak(msg)
+            else:
+                # TODO: examine and detect login failiure due to credentials (but no captcha barrier, yet)
+                print 'other error happened, tell the admin support gropu this: ' + jerr.text.strip()[0:100]
+        except:
             LOGGER.exception('JIRA Server connection failure! (url=' + server_url)
+            # TODO: consider: reraise and handle in calling function 
+            #       instead of return None.
+            #
             return None
 
         return new_jira_connection
@@ -241,8 +258,7 @@ class JIRAagentSkill(MycroftSkill):
             if self.jira is None:
                 LOGGER.debug('self.jira server connection is None. '
                              'Cannot proceed without server connection.')
-                self.speak("My apologies, but I could not get a connection to "
-                           "the JIRA server. Report request cannot be fulfilled.")
+                self.speak_dialog("server.connection.failure") 
                 return None
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
@@ -291,6 +307,11 @@ class JIRAagentSkill(MycroftSkill):
         if self.jira is None:
             LOGGER.debug('____' + str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
+            if self.jira is None:
+                LOGGER.debug('self.jira server connection is None. '
+                             'Cannot proceed without server connection.')
+                self.speak_dialog("server.connection.failure") 
+                return None
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
@@ -311,6 +332,11 @@ class JIRAagentSkill(MycroftSkill):
             LOGGER.info('Unexpectedly absent jira connection' +
                         str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
+            if self.jira is None:
+                LOGGER.debug('self.jira server connection is None. '
+                             'Cannot proceed without server connection.')
+                self.speak_dialog("server.connection.failure") 
+                return None
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
@@ -342,6 +368,11 @@ class JIRAagentSkill(MycroftSkill):
             LOGGER.info('Unexpectedly absent jira connection' +
                         str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
+            if self.jira is None:
+                LOGGER.debug('self.jira server connection is None. '
+                             'Cannot proceed without server connection.')
+                self.speak_dialog("server.connection.failure") 
+                return None
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
