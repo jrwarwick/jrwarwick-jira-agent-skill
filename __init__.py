@@ -395,7 +395,19 @@ class JIRAagentSkill(MycroftSkill):
 
 
     def handle_issue_status_intent(self, message):
-        # TODO: flexibly, and somewhat reliably  detect if user
+        if self.jira is None:
+            LOGGER.info('Unexpectedly absent jira connection' +
+                        str(type(self)) + ' :: ' + str(id(self)))
+            self.jira = self.server_login()
+            if self.jira is None:
+                LOGGER.debug('self.jira server connection is None. '
+                             'Cannot proceed without server connection.')
+                self.speak_dialog("server.connection.failure") 
+                return None
+        else:
+            LOGGER.info('JIRA Server login appears to have succeded already.')
+
+        # TODO: flexibly/fuzzily, and somewhat reliably  detect if user
         # uttered the project name abbrev. prefix and just deal with it.
 
         # issue_id = re.sub(r'\s+', '', self.get_response('specify.issue'))
