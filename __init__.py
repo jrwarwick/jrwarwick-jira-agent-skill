@@ -137,7 +137,7 @@ class JIRAagentSkill(MycroftSkill):
             else:
                 # TODO: examine and detect login failiure due to credentials
                 #       (but no captcha barrier installed, yet)
-                msg = ('Unexpected connection error, consult tech support.' +
+                msg = ("Unexpected connection error, consult tech support." +
                        jerr.text.strip()[0:100])
                 LOGGER.debug(msg)
                 self.speak(msg)
@@ -181,10 +181,10 @@ class JIRAagentSkill(MycroftSkill):
             # LOGGER.debug('____' + str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
             if self.jira is None:
-                LOGGER.debug('self.jira server connection is None. '
-                             'Cannot proceed without server connection.')
+                LOGGER.debug("self.jira server connection is None. "
+                             "Cannot proceed without server connection.")
                 self.speak_dialog("server.connection.failure")
-                raise self.JIRAConnectionError('Call to server_login returned None.')
+                raise self.ServerConnectionError("Call to server_login returned None.")
             else:
                 self.project_key = self.get_jira_project()
                 LOGGER.info("JIRA project key set to '" + self.project_key + "'.")
@@ -193,6 +193,8 @@ class JIRAagentSkill(MycroftSkill):
         else:
             # TODO: deeper investigation like maybe header check
             # or a simple issues list call with exception handling
+            LOGGER.debug("Although self.jira is not None, strictly speaking it could"
+                         "still be pointing to invalid/expired connection object.")
 
 
     def clean_summary(self, summary_text):
@@ -288,9 +290,15 @@ class JIRAagentSkill(MycroftSkill):
         self.register_intent(contact_info_intent,
                              self.handle_contact_info_intent)
 
-        self.jira = self.server_login()
-        self.project_key = self.get_jira_project()
-        LOGGER.info("JIRA project key set to '" + self.project_key + "'.")
+        # self.jira = self.server_login()
+        # self.project_key = self.get_jira_project()
+        # LOGGER.info("JIRA project key set to '" + self.project_key + "'.")
+        try:
+            self.establish_server_connection()
+        except self.ServerConnectionError:
+            LOGGER.info("JIRA project key could not be set, connection not created. "
+                        "Even if skill loaded, it will be NON-functional until "
+                        "configuration is corrected and/or service restored.")
 
 
     def handle_status_report_intent(self, message):
@@ -299,10 +307,10 @@ class JIRAagentSkill(MycroftSkill):
         if self.jira is None:
             try:
                 self.establish_server_connection()
-            except self.JIRAConnectionError:
+            except self.ServerConnectionError:
                 return None
         else:
-            LOGGER.info('JIRA Server login appears to have succeded already.')
+            LOGGER.info("JIRA Server login appears to have succeded already.")
 
         self.speak("JIRA Service Desk status report:")
         inquiry = self.jira.search_issues('assignee is EMPTY AND '
@@ -348,12 +356,12 @@ class JIRAagentSkill(MycroftSkill):
         if self.jira is None:
             self.jira = self.server_login()
             if self.jira is None:
-                LOGGER.debug('self.jira server connection is None. '
-                             'Cannot proceed without server connection.')
+                LOGGER.debug("self.jira server connection is None. "
+                             "Cannot proceed without server connection.")
                 self.speak_dialog("server.connection.failure") 
                 return None
         else:
-            LOGGER.info('JIRA Server login appears to have succeded already.')
+            LOGGER.info("JIRA Server login appears to have succeded already.")
 
         inquiry = self.jira.search_issues('status != Resolved '
                                           'ORDER BY priority DESC, duedate ASC')
@@ -369,8 +377,8 @@ class JIRAagentSkill(MycroftSkill):
 
     def handle_issues_overdue_intent(self, message):
         if self.jira is None:
-            LOGGER.info('Unexpectedly absent jira connection' +
-                        str(type(self)) + ' :: ' + str(id(self)))
+            LOGGER.info("Unexpectedly absent jira connection" +
+                        str(type(self)) + " :: " + str(id(self)))
             self.jira = self.server_login()
             if self.jira is None:
                 LOGGER.debug('self.jira server connection is None. '
@@ -378,7 +386,7 @@ class JIRAagentSkill(MycroftSkill):
                 self.speak_dialog("server.connection.failure")
                 return None
         else:
-            LOGGER.info('JIRA Server login appears to have succeded already.')
+            LOGGER.info("JIRA Server login appears to have succeded already.")
 
         inquiry = self.jira.search_issues('status != Resolved AND '
                                           'duedate < now() '
@@ -405,16 +413,16 @@ class JIRAagentSkill(MycroftSkill):
         # does something overdue at medium priority exceed
         # explicit high priority? Do we account for VIP factor?
         if self.jira is None:
-            LOGGER.info('Unexpectedly absent jira connection' +
-                        str(type(self)) + ' :: ' + str(id(self)))
+            LOGGER.info("Unexpectedly absent jira connection" +
+                        str(type(self)) + " :: " + str(id(self)))
             self.jira = self.server_login()
             if self.jira is None:
-                LOGGER.debug('self.jira server connection is None. '
-                             'Cannot proceed without server connection.')
+                LOGGER.debug("self.jira server connection is None. "
+                             "Cannot proceed without server connection.")
                 self.speak_dialog("server.connection.failure")
                 return None
         else:
-            LOGGER.info('JIRA Server login appears to have succeded already.')
+            LOGGER.info("JIRA Server login appears to have succeded already.")
 
         inquiry = self.jira.search_issues('status != Resolved '
                                           'ORDER BY priority desc, duedate asc,'
@@ -436,12 +444,12 @@ class JIRAagentSkill(MycroftSkill):
 
     def handle_issue_status_intent(self, message):
         if self.jira is None:
-            LOGGER.info('Unexpectedly absent jira connection' +
+            LOGGER.info("Unexpectedly absent jira connection" +
                         str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
             if self.jira is None:
-                LOGGER.debug('self.jira server connection is None. '
-                             'Cannot proceed without server connection.')
+                LOGGER.debug("self.jira server connection is None. "
+                             "Cannot proceed without server connection.")
                 self.speak_dialog("server.connection.failure")
                 return None
         else:
