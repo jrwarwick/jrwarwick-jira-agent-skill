@@ -51,11 +51,20 @@ class JIRAagentSkill(MycroftSkill):
     # omit leading slash, but include trailing slash
     JIRA_REST_API_PATH = 'rest/api/2/'
 
+    class ServerConnectionError(Exception):
+        """Simple, basic exception for any incomplete connection to the JIRA
+        server. There is no point in trying anything further without an active
+        and valid connection.
+        """
+        def __init__(self, msg):
+            self.msg = msg
+
     # The constructor of the skill, which calls MycroftSkill's constructor
     def __init__(self):
         super(JIRAagentSkill, self).__init__(name="JIRAagentSkill")
         self.jira = None
         self.project_key = None
+
 
     def server_login(self):
         """Establish basic login via jira package interface (RESTful API)
@@ -75,7 +84,7 @@ class JIRAagentSkill(MycroftSkill):
                 self.speak("Please navigate to home.mycroft.ai to establish "
                            "or complete JIRA Service Desk server access "
                            "configuration.") 
-                # phrase is slightly different than home.configuration.prompt                
+                # phrase is slightly different than home.configuration.prompt
             return None
         except Exception:
             LOGGER.exception('Error while trying to retrieve skill settings.')
@@ -85,8 +94,8 @@ class JIRAagentSkill(MycroftSkill):
             #   jira = JIRA(server=os.environ['JIRA_SERVER_URL'],
             #      basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD']))
             # http://jira01.corpintra.com:8080/rest/api/2/
-            # Is there some kind of magical or clever way to 
-            # discover the current available API revision? 
+            # Is there some kind of magical or clever way to
+            # discover the current available API revision?
             # Maybe let user know if we are not using it?
             server_url = self.settings.get("url", "").strip()
             if (server_url[0:7].lower() != 'http://' and
@@ -126,7 +135,7 @@ class JIRAagentSkill(MycroftSkill):
                 LOGGER.info(msg)
                 self.speak(msg)
             else:
-                # TODO: examine and detect login failiure due to credentials 
+                # TODO: examine and detect login failiure due to credentials
                 #       (but no captcha barrier installed, yet)
                 msg = ('Unexpected connection error, consult tech support.' +
                        jerr.text.strip()[0:100])
@@ -134,7 +143,7 @@ class JIRAagentSkill(MycroftSkill):
                 self.speak(msg)
         except:
             LOGGER.exception('JIRA Server connection failure! (url=' + server_url)
-            # TODO: consider: reraise and handle in calling function 
+            # TODO: consider: reraise and handle in calling function
             #       instead of return None.
             #
             return None
@@ -152,17 +161,39 @@ class JIRAagentSkill(MycroftSkill):
         # only type install. Caveat Emptor or something.
         # LOGGER.debug("--SELF reveal: " + str(type(self)) + " | " +
         #             str(id(self)) + "  |  " + str(self.__dict__.keys()) )
-        # Another concern: what is the Most Right thing to do here: 
-        #  check for connection, return None if not connected? or allow 
+        # Another concern: what is the Most Right thing to do here:
+        #  check for connection, return None if not connected? or allow
         #  the exception? or check for connection but /throw/ a logical
-        #  exception? 
+        #  exception?
         return self.jira.projects()[0].key
 
-    # TODO:  seriously considering a establish_server_connection()
-    # which is server login, checking for auth failures, sort of
-    # handling those and then after that, check for project prefix
-    # and fill in or update via get_jira_project then use that at 
-    # top of the handlers as well as initialize.
+    def establish_server_connection(self):
+        """Series of standard actions including login, but a few things
+        beyond that any connect or reconnect should try to do. E.g.,
+        determine the project short-name/prefix. Thus this should appar
+        at the top of almost every intent handler.
+        """
+        # which is server login, checking for auth failures, sort of
+        # handling those and then after that, check for project prefix
+        # and fill in or update via get_jira_project then use that at
+        # top of the handlers as well as initialize.
+        if self.jira is None:  #actually /do/ we want this to be conditional?
+            # LOGGER.debug('____' + str(type(self)) + ' :: ' + str(id(self)))
+            self.jira = self.server_login()
+            if self.jira is None:
+                LOGGER.debug('self.jira server connection is None. '
+                             'Cannot proceed without server connection.')
+                self.speak_dialog("server.connection.failure")
+                raise self.JIRAConnectionError('Call to server_login returned None.')
+            else:
+                self.project_key = self.get_jira_project()
+                LOGGER.info("JIRA project key set to '" + self.project_key + "'.")
+                # Maybe an optional announcement of same. 
+                # or maybe only announce on init case?
+        else:
+            # TODO: deeper investigation like maybe header check
+            # or a simple issues list call with exception handling
+
 
     def clean_summary(self, summary_text):
         """Accept a string which is a typical issue record summary text
@@ -266,12 +297,9 @@ class JIRAagentSkill(MycroftSkill):
         """Handle intent for a general, overall service desk status report.
         """
         if self.jira is None:
-            # LOGGER.debug('____' + str(type(self)) + ' :: ' + str(id(self)))
-            self.jira = self.server_login()
-            if self.jira is None:
-                LOGGER.debug('self.jira server connection is None. '
-                             'Cannot proceed without server connection.')
-                self.speak_dialog("server.connection.failure") 
+            try:
+                self.establish_server_connection()
+            except self.JIRAConnectionError:
                 return None
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
@@ -347,7 +375,7 @@ class JIRAagentSkill(MycroftSkill):
             if self.jira is None:
                 LOGGER.debug('self.jira server connection is None. '
                              'Cannot proceed without server connection.')
-                self.speak_dialog("server.connection.failure") 
+                self.speak_dialog("server.connection.failure")
                 return None
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
@@ -383,7 +411,7 @@ class JIRAagentSkill(MycroftSkill):
             if self.jira is None:
                 LOGGER.debug('self.jira server connection is None. '
                              'Cannot proceed without server connection.')
-                self.speak_dialog("server.connection.failure") 
+                self.speak_dialog("server.connection.failure")
                 return None
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
@@ -414,7 +442,7 @@ class JIRAagentSkill(MycroftSkill):
             if self.jira is None:
                 LOGGER.debug('self.jira server connection is None. '
                              'Cannot proceed without server connection.')
-                self.speak_dialog("server.connection.failure") 
+                self.speak_dialog("server.connection.failure")
                 return None
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
@@ -434,7 +462,7 @@ class JIRAagentSkill(MycroftSkill):
         # uttered the project name abbrev. prefix and just deal with it.
         issue_id = self.get_response(dialog='specify.issue',
                                      validator=issue_id_validator,
-                                     on_fail=valid_issue_id_desc, 
+                                     on_fail=valid_issue_id_desc,
                                      num_retries=3)
         if not isinstance(issue_id, basestring):
             LOGGER.debug('issue_id is ' + str(type(issue_id)))
@@ -530,7 +558,7 @@ class JIRAagentSkill(MycroftSkill):
         """
         self.speak("Unfortunately, I do not yet have the ability to file " +
                    "an issue record by myself.")
-        # Should interim contact info lines just below just be 
+        # Should interim contact info lines just below just be
         # a call to the function handle_contact_info_intent?
         telephone_number = self.settings.get("support_telephone", "")
         # TODO: pull from settings, but also have some kind of fallback.
