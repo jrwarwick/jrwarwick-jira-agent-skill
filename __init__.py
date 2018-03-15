@@ -66,8 +66,8 @@ class JIRAagentSkill(MycroftSkill):
         try:
             # TODO: revisit this to confirm possible initial null/none/"" ?
             if (self.settings.get("url", "") or
-                self.settings.get("username", "") or
-                self.settings.get("password", "")):
+               self.settings.get("username", "") or
+               self.settings.get("password", "")):
                     self._is_setup = True
             else:
                 # There appears to be a planned, but so far only stub for this
@@ -90,7 +90,7 @@ class JIRAagentSkill(MycroftSkill):
             # Maybe let user know if we are not using it?
             server_url = self.settings.get("url", "").strip()
             if (server_url[0:7].lower() != 'http://' and
-                server_url[0:8].lower() != 'https://'):
+               server_url[0:8].lower() != 'https://'):
                 self.speak("It seems that you have specified an invalid "
                            "server U-R-L. A valid server U-R-L must include "
                            "the h t t p colon slash slash prefix.")
@@ -119,17 +119,17 @@ class JIRAagentSkill(MycroftSkill):
                              jerr.text, jerr.status_code)
             if jerr.status_code == 403 and jerr.text.strip().startswith('CAPTCHA_CHALLENGE'):
                 msg = ("JIRA server Login was denied and a captcha requirement "
-                      "has been activated. Either login manually via web browser "
-                      "to clear it, or request an admin use the 'Reset failed "
-                      "login count' control in the User Management Module of "
-                      "the Administration console in JIRA.")
+                       "has been activated. Either login manually via web browser "
+                       "to clear it, or request an admin use the 'Reset failed "
+                       "login count' control in the User Management Module of "
+                       "the Administration console in JIRA.")
                 LOGGER.info(msg)
                 self.speak(msg)
             else:
                 # TODO: examine and detect login failiure due to credentials 
                 #       (but no captcha barrier installed, yet)
                 msg = ('Unexpected connection error, consult tech support.' +
-                      jerr.text.strip()[0:100])
+                       jerr.text.strip()[0:100])
                 LOGGER.debug(msg)
                 self.speak(msg)
         except:
@@ -266,7 +266,7 @@ class JIRAagentSkill(MycroftSkill):
         """Handle intent for a general, overall service desk status report.
         """
         if self.jira is None:
-            #LOGGER.debug('____' + str(type(self)) + ' :: ' + str(id(self)))
+            # LOGGER.debug('____' + str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
             if self.jira is None:
                 LOGGER.debug('self.jira server connection is None. '
@@ -397,9 +397,9 @@ class JIRAagentSkill(MycroftSkill):
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("The highest priority issue is " + str(thissue.key) +
                        " regarding: " + self.clean_summary(thissue.fields.summary))
-                    # TODO: strip the proj key prefix, if skill prefs
-                    #     indicate to do so
-                    #     str(thissue.key).replace(self.project_key + '-', '')
+            # TODO: strip the proj key prefix, if skill prefs
+            #     indicate to do so
+            #     str(thissue.key).replace(self.project_key + '-', '')
         # TODO: now establish Context so that if user follows up with:
         #  "when is that issue due?" or "who reported this issue?"  or
         #  "how long ago was this reported?!"
@@ -419,11 +419,6 @@ class JIRAagentSkill(MycroftSkill):
         else:
             LOGGER.info('JIRA Server login appears to have succeded already.')
 
-        # TODO: flexibly/fuzzily, and somewhat reliably  detect if user
-        # uttered the project name abbrev. prefix and just deal with it.
-
-        # issue_id = re.sub(r'\s+', '', self.get_response('specify.issue'))
-
         def issue_id_validator(utterance):
             # Confesion: "20 characters" is an arbitrary max in this re
             return re.match(r'^[\s0-9]{1,20}$', utterance)
@@ -435,9 +430,12 @@ class JIRAagentSkill(MycroftSkill):
                     ' JIRA project name abbreviation.'
                     ' Let us try again.')
 
+        # TODO: flexibly/fuzzily, and somewhat reliably  detect if user
+        # uttered the project name abbrev. prefix and just deal with it.
         issue_id = self.get_response(dialog='specify.issue',
                                      validator=issue_id_validator,
-                                     on_fail=valid_issue_id_desc, num_retries=3)
+                                     on_fail=valid_issue_id_desc, 
+                                     num_retries=3)
         if not isinstance(issue_id, basestring):
             LOGGER.debug('issue_id is ' + str(type(issue_id)))
         if issue_id is None:
