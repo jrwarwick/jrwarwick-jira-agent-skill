@@ -64,7 +64,7 @@ class JIRAagentSkill(MycroftSkill):
         """
         new_jira_connection = None
         try:
-            # TODO: revisit this. null/none/"" ?
+            # TODO: revisit this to confirm possible initial null/none/"" ?
             if (self.settings.get("url", "") or
                 self.settings.get("username", "") or
                 self.settings.get("password", "")):
@@ -84,8 +84,8 @@ class JIRAagentSkill(MycroftSkill):
             # Would a config fallback be appropriate?
             #   jira = JIRA(server=os.environ['JIRA_SERVER_URL'],
             #      basic_auth=(os.environ['JIRA_USER'],os.environ['JIRA_PASSWORD']))
-            #  http://bakjira01.int.bry.com:8080/rest/api/2/
-            #  Is there some kind of magical or clever way to 
+            # http://jira01.corpintra.com:8080/rest/api/2/
+            # Is there some kind of magical or clever way to 
             # discover the current available API revision? 
             # Maybe let user know if we are not using it?
             server_url = self.settings.get("url", "").strip()
@@ -126,8 +126,12 @@ class JIRAagentSkill(MycroftSkill):
                 LOGGER.info(msg)
                 self.speak(msg)
             else:
-                # TODO: examine and detect login failiure due to credentials (but no captcha barrier, yet)
-                print 'other error happened, tell the admin support gropu this: ' + jerr.text.strip()[0:100]
+                # TODO: examine and detect login failiure due to credentials 
+                #       (but no captcha barrier installed, yet)
+                msg = ('Unexpected connection error, consult tech support.' +
+                      jerr.text.strip()[0:100])
+                LOGGER.debug(msg)
+                self.speak(msg)
         except:
             LOGGER.exception('JIRA Server connection failure! (url=' + server_url)
             # TODO: consider: reraise and handle in calling function 
@@ -148,8 +152,17 @@ class JIRAagentSkill(MycroftSkill):
         # only type install. Caveat Emptor or something.
         # LOGGER.debug("--SELF reveal: " + str(type(self)) + " | " +
         #             str(id(self)) + "  |  " + str(self.__dict__.keys()) )
+        # Another concern: what is the Most Right thing to do here: 
+        #  check for connection, return None if not connected? or allow 
+        #  the exception? or check for connection but /throw/ a logical
+        #  exception? 
         return self.jira.projects()[0].key
 
+    # TODO:  seriously considering a establish_server_connection()
+    # which is server login, checking for auth failures, sort of
+    # handling those and then after that, check for project prefix
+    # and fill in or update via get_jira_project then use that at 
+    # top of the handlers as well as initialize.
 
     def clean_summary(self, summary_text):
         """Accept a string which is a typical issue record summary text
@@ -253,7 +266,7 @@ class JIRAagentSkill(MycroftSkill):
         """Handle intent for a general, overall service desk status report.
         """
         if self.jira is None:
-            LOGGER.info('____' + str(type(self)) + ' :: ' + str(id(self)))
+            #LOGGER.debug('____' + str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
             if self.jira is None:
                 LOGGER.debug('self.jira server connection is None. '
@@ -305,7 +318,6 @@ class JIRAagentSkill(MycroftSkill):
 
     def handle_issues_open_intent(self, message):
         if self.jira is None:
-            LOGGER.debug('____' + str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
             if self.jira is None:
                 LOGGER.debug('self.jira server connection is None. '
@@ -357,7 +369,7 @@ class JIRAagentSkill(MycroftSkill):
     # TODO: def handle_how_many_vip_issues(self, message):
     # TODO: def handle_how_many_queue_issues(self, message):
         # stats on named queues. JIRA comes seeded with a few,
-        # but make it a param
+        # but maybe make it a param/context/entity
 
 
     def handle_most_urgent_issue(self, message):
@@ -520,8 +532,8 @@ class JIRAagentSkill(MycroftSkill):
         """
         self.speak("Unfortunately, I do not yet have the ability to file " +
                    "an issue record by myself.")
-        # Should line 416 - 435 just be a call to the function
-        # handle_contact_info_intent?
+        # Should interim contact info lines just below just be 
+        # a call to the function handle_contact_info_intent?
         telephone_number = self.settings.get("support_telephone", "")
         # TODO: pull from settings, but also have some kind of fallback.
         # check and fallback on telephone number
@@ -558,6 +570,9 @@ class JIRAagentSkill(MycroftSkill):
 
 
     def handle_contact_info_intent(self, message):
+        """Just reply with a summary of key contact information for
+        traditional human-to-human voice or text communications.
+        """
         telephone_number = self.settings.get('support_telephone', "")
         # TODO check and fallback on telephone number
         data = {'telephone_number': telephone_number,
