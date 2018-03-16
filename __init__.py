@@ -83,7 +83,7 @@ class JIRAagentSkill(MycroftSkill):
                 # get_intro_message(self)  in docs. So, TODO-one-day?
                 self.speak("Please navigate to home.mycroft.ai to establish "
                            "or complete JIRA Service Desk server access "
-                           "configuration.") 
+                           "configuration.")
                 # phrase is slightly different than home.configuration.prompt
             return None
         except Exception:
@@ -193,8 +193,9 @@ class JIRAagentSkill(MycroftSkill):
         else:
             # TODO: deeper investigation like maybe header check
             # or a simple issues list call with exception handling
-            LOGGER.debug("Although self.jira is not None, strictly speaking it could"
-                         "still be pointing to invalid/expired connection object.")
+            LOGGER.debug("Although self.jira is not None, strictly speaking"
+                         "it could still be pointing to invalid/expired "
+                         "connection object.")
 
 
     def clean_summary(self, summary_text):
@@ -358,7 +359,7 @@ class JIRAagentSkill(MycroftSkill):
             if self.jira is None:
                 LOGGER.debug("self.jira server connection is None. "
                              "Cannot proceed without server connection.")
-                self.speak_dialog("server.connection.failure") 
+                self.speak_dialog("server.connection.failure")
                 return None
         else:
             LOGGER.info("JIRA Server login appears to have succeded already.")
