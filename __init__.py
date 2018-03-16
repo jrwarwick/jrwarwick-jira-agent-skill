@@ -72,6 +72,8 @@ class JIRAagentSkill(MycroftSkill):
         RETURN the connection object.
         """
         new_jira_connection = None
+        if self.jira is not None:
+            LOGGER.debug("self.jira is not already None, FYI. So this is a 're-login'.")
         try:
             # TODO: revisit this to confirm possible initial null/none/"" ?
             if (self.settings.get("url", "") or
@@ -181,7 +183,7 @@ class JIRAagentSkill(MycroftSkill):
             # LOGGER.debug('____' + str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
             if self.jira is None:
-                LOGGER.debug("self.jira server connection is None. "
+                LOGGER.debug("self.jira server connection is None after call to server_login(). "
                              "Cannot proceed without server connection.")
                 self.speak_dialog("server.connection.failure")
                 raise self.ServerConnectionError("Call to server_login returned None.")
