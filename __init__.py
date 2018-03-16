@@ -118,7 +118,7 @@ class JIRAagentSkill(MycroftSkill):
                 if server_url[-1:] != '/':
                     server_url = server_url + '/'
                 server_url = server_url + self.JIRA_REST_API_PATH
-
+                LOGGER.debug("Determined server_url is: " + server_url)
             new_jira_connection = JIRA(server=self.settings.get("url", ""),
                                        basic_auth=(self.settings.get("username", ""),
                                                    self.settings.get("password", ""))
