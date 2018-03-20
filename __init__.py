@@ -87,9 +87,10 @@ class JIRAagentSkill(MycroftSkill):
                            "or complete JIRA Service Desk server access "
                            "configuration.")
                 # phrase is slightly different than home.configuration.prompt
-            return None
+                LOGGER.debug("Probably missing part of the critical 3 settings. ")
+                return None
         except Exception:
-            LOGGER.exception('Error while trying to retrieve skill settings.')
+            LOGGER.exception('Error while trying to retrieve skill critical settings.')
             return None
         try:
             # Would a config fallback be appropriate?
@@ -109,7 +110,7 @@ class JIRAagentSkill(MycroftSkill):
                 raise ValueError('server_url contained invalid URL, missing '
                                  'correct prefix: {server_url}'
                                  .format(server_url=repr(server_url)))
-            if server_url[-11:] == self.JIRA_REST_API_PATH:
+            if server_url.endswith(self.JIRA_REST_API_PATH):
                 self.speak("It seems that you have included the rest api 2 "
                            "path in the server URL. This should work fine. "
                            "However, if the API is upgraded, you may need to "
@@ -120,13 +121,15 @@ class JIRAagentSkill(MycroftSkill):
                 if server_url[-1:] != '/':
                     server_url = server_url + '/'
                 server_url = server_url + self.JIRA_REST_API_PATH
-                LOGGER.debug("Determined server_url is: " + server_url)
+            LOGGER.debug("Determined server_url is: " + server_url)
             new_jira_connection = JIRA(server=self.settings.get("url", ""),
                                        basic_auth=(self.settings.get("username", ""),
                                                    self.settings.get("password", ""))
                                        )
         except JIRAError as jerr:
             LOGGER.exception('JIRA Server connection failure! ', 
+                             jerr.text, jerr.status_code)
+            LOGGER.info('JIRA Server connection failure! ', 
                              jerr.text, jerr.status_code)
             if jerr.status_code == 403 and jerr.text.strip().startswith('CAPTCHA_CHALLENGE'):
                 msg = ("JIRA server Login was denied and a captcha requirement "
@@ -311,6 +314,7 @@ class JIRAagentSkill(MycroftSkill):
             try:
                 self.establish_server_connection()
             except self.ServerConnectionError:
+                LOGGER.debug("Caught connection error exception, bailing out of intent.")
                 return None
         else:
             LOGGER.info("JIRA Server login appears to have succeded already.")
