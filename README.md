@@ -6,7 +6,7 @@ Once configured to connect to your on-premises Atlassian JIRA server with Servic
 
 ## Examples 
 * "Mycroft, how many JIRA issues are open?"
-* "Mycroft, how many open JIRA issues are overdue?"
+* "Mycroft, how many JIRA issues are overdue?"
 * "Mycroft, JIRA status report!"
 * _planned for future:  "Mycroft, raise a new JIRA service request for computer monitor replacement"_
 * "Mycroft, what is the most urgent service desk issue?"
