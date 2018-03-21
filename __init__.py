@@ -469,32 +469,45 @@ class JIRAagentSkill(MycroftSkill):
             LOGGER.info("JIRA Server login appears to have succeded already.")
 
         issue_id = message.data.get('IssueID')
-        if isinstance(int(issue_id), int):
-            self.speak("Searching for issue " +
-                       self.project_key + '-' + str(issue_id))
-            try:
-                issue = self.jira.issue(self.project_key + '-' + str(issue_id))
-                if issue.fields.resolution is not None:
-                    self.speak("Issue is already yet resolved.")
-                if issue.fields.duedate is None:
-                    self.speak("Issue has no specified due date.")
-                    # TODO: consult default SLA? heuristics based on report time?
-                else:    
-                    then = dateutil.parser.parse(issue.fields.duedate)
-                    if then.tzinfo is None:
-                        then = datetime.datetime(then.year, then.month,
-                                                 then.day, tzinfo=tzlocal())
-                    ago = datetime.datetime.now(then.tzinfo) - then
-                    cronproximate = ''
-                    if ago.days < 0:
-                        if ago.days > -3:
-                            self.speak("This issue is due very soon.")
-                    elif ago.days == 0:
-                        self.speak("This issue is due today!")
-                    elif ago.days > 0:
-                        cronproximate = str(ago.days) + " days."
-                        self.speak("This issue is overdue by " + cronproximate)
-                    self.speak("On " + then)
+        if re.match(self.project_key + '-[0-9]+', issue_id):
+            pass
+        elif isinstance(int(issue_id), int):
+            issue_id = self.project_key + '-' + str(issue_id)
+        else:
+            self.speak("Sorry, I do not seem to have a valid issue I D "
+                       "to look for.")
+            LOGGER.debug("Will not try to search for issue " + issue_id)
+            return None
+
+        LOGGER.debug("Searching for issue " +
+                     self.project_key + '-' + str(issue_id))
+        try:
+            issue = self.jira.issue(issue_id)
+            if issue.fields.resolution is not None:
+                self.speak("Issue is already yet resolved.")
+            if issue.fields.duedate is None:
+                self.speak("Issue has no specified due date.")
+                # TODO: consult default SLA? heuristics based on report time?
+            else:    
+                then = dateutil.parser.parse(issue.fields.duedate)
+                if then.tzinfo is None:
+                    then = datetime.datetime(then.year, then.month,
+                                             then.day, tzinfo=tzlocal())
+                ago = datetime.datetime.now(then.tzinfo) - then
+                cronproximate = ''
+                if ago.days < 0:
+                    if ago.days > -3:
+                        self.speak("This issue is due very soon.")
+                elif ago.days == 0:
+                    self.speak("This issue is due today!")
+                elif ago.days > 0:
+                    cronproximate = str(ago.days) + " days."
+                    self.speak("This issue is overdue by " + cronproximate)
+                self.speak("On " + then)
+        except Exception:
+            self.speak("Search for further details on the issue record "
+                       "failed. Sorry.")
+            LOGGER.exception('JIRA issue API error!')
 
 
     def handle_issue_status_intent(self, message):
