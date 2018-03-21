@@ -281,6 +281,11 @@ class JIRAagentSkill(MycroftSkill):
         self.register_intent(most_urgent_issue_intent,
                              self.handle_most_urgent_issue)
 
+        due_date_for_issue = IntentBuilder("DueDateForIssueIntent").\
+            require("DueDate").require("IssueID").build()
+        self.register_intent(due_date_for_issue,
+                             self.handle_due_date_for_issue)
+
         issue_status_intent = IntentBuilder("IssueStatusIntent").\
             require("IssueStatusKeyword").build()
         self.register_intent(issue_status_intent,
@@ -416,7 +421,7 @@ class JIRAagentSkill(MycroftSkill):
         # stats on named queues. JIRA comes seeded with a few,
         # but maybe make it a param/context/entity
     # TODO: def handle_to_whom_issue_is_assigned(self, message):
-    # TODO: def handle_due_date_for_issue(self, message):
+    #       or less pedantically : handle_issue_assignee()
 
 
     def handle_most_urgent_issue(self, message):
@@ -445,11 +450,51 @@ class JIRAagentSkill(MycroftSkill):
             # TODO: strip the proj key prefix, if skill prefs
             #     indicate to do so
             #     str(thissue.key).replace(self.project_key + '-', '')
-            self.set_context('IssueID',str(thissue.key))
+            self.set_context('IssueID', str(thissue.key))
             # TODO: now establish Context so that if user follows up with:
             #  "when is that issue due?" or "who reported this issue?"  or
             #  "how long ago was this reported?!"
             #  we can give real, useful, accurate, pertinent answers.
+
+
+    def handle_due_date_for_issue(self, message):
+        if self.jira is None:
+            try:
+                self.establish_server_connection()
+            except self.ServerConnectionError:
+                LOGGER.debug("Caught connection error exception, "
+                             "bailing out of intent.")
+                return None
+        else:
+            LOGGER.info("JIRA Server login appears to have succeded already.")
+
+        issue_id = message.data.get('IssueID')
+        if isinstance(int(issue_id), int):
+            self.speak("Searching for issue " +
+                       self.project_key + '-' + str(issue_id))
+            try:
+                issue = self.jira.issue(self.project_key + '-' + str(issue_id))
+                if issue.fields.resolution is not None:
+                    self.speak("Issue is already yet resolved.")
+                if issue.fields.duedate is None:
+                    self.speak("Issue has no specified due date.")
+                    # TODO: consult default SLA? heuristics based on report time?
+                else:    
+                    then = dateutil.parser.parse(issue.fields.duedate)
+                    if then.tzinfo is None:
+                        then = datetime.datetime(then.year, then.month,
+                                                    then.day, tzinfo=tzlocal())
+                    ago = datetime.datetime.now(then.tzinfo) - then
+                    cronproximate = ''
+                    if ago.days < 0:
+                        if ago.days > -3:
+                            self.speak("This issue is due very soon.")
+                    elif ago.days == 0:
+                        self.speak("This issue is due today!")
+                    elif ago.days > 0:
+                        cronproximate = str(ago.days) + " days."
+                        self.speak("This issue is overdue by " + cronproximate)
+                    self.speak("On " + then)
 
 
     def handle_issue_status_intent(self, message):
