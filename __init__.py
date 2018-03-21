@@ -483,7 +483,7 @@ class JIRAagentSkill(MycroftSkill):
                     then = dateutil.parser.parse(issue.fields.duedate)
                     if then.tzinfo is None:
                         then = datetime.datetime(then.year, then.month,
-                                                    then.day, tzinfo=tzlocal())
+                                                 then.day, tzinfo=tzlocal())
                     ago = datetime.datetime.now(then.tzinfo) - then
                     cronproximate = ''
                     if ago.days < 0:
