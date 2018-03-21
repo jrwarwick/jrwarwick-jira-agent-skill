@@ -88,10 +88,10 @@ class JIRAagentSkill(MycroftSkill):
                            "or complete JIRA Service Desk server access "
                            "configuration.")
                 # phrase is slightly different than home.configuration.prompt
-                LOGGER.debug("Probably missing part of the critical 3 settings. ")
+                LOGGER.debug("Probably missing part of the critical 3 settings.")
                 return None
         except Exception:
-            LOGGER.exception('Error while trying to retrieve skill critical settings.')
+            LOGGER.exception("Error while trying to retrieve skill critical settings.")
             return None
         try:
             # Would a config fallback be appropriate?
@@ -108,8 +108,8 @@ class JIRAagentSkill(MycroftSkill):
                            "server U-R-L. A valid server U-R-L must include "
                            "the h t t p colon slash slash prefix.")
                 self.speak_dialog("home.configuration.prompt")
-                raise ValueError('server_url contained invalid URL, missing '
-                                 'correct prefix: {server_url}'
+                raise ValueError("server_url contained invalid URL, missing "
+                                 "correct prefix: {server_url}"
                                  .format(server_url=repr(server_url)))
             if server_url.endswith(self.JIRA_REST_API_PATH):
                 self.speak("It seems that you have included the rest api 2 "
@@ -128,11 +128,11 @@ class JIRAagentSkill(MycroftSkill):
                                                    self.settings.get("password", ""))
                                        )
         except JIRAError as jerr:
-            LOGGER.exception('JIRA Server connection failure! ', 
+            LOGGER.exception("JIRA Server connection failure! ",
                              jerr.text, jerr.status_code)
-            LOGGER.info('JIRA Server connection failure! ', 
-                             jerr.text, jerr.status_code)
-            if jerr.status_code == 403 and jerr.text.strip().startswith('CAPTCHA_CHALLENGE'):
+            LOGGER.info("JIRA Server connection failure! ",
+                        jerr.text, jerr.status_code)
+            if jerr.status_code == 403 and jerr.text.strip().startswith("CAPTCHA_CHALLENGE"):
                 msg = ("JIRA server Login was denied and a captcha requirement "
                        "has been activated. Either login manually via web browser "
                        "to clear it, or request an admin use the 'Reset failed "
@@ -148,7 +148,7 @@ class JIRAagentSkill(MycroftSkill):
                 LOGGER.debug(msg)
                 self.speak(msg)
         except:
-            LOGGER.exception('JIRA Server connection failure! (url=' + server_url)
+            LOGGER.exception("JIRA Server connection failure! (url=" + server_url)
             # TODO: consider: reraise and handle in calling function
             #       instead of return None.
             #
@@ -415,6 +415,8 @@ class JIRAagentSkill(MycroftSkill):
     # TODO: def handle_how_many_queue_issues(self, message):
         # stats on named queues. JIRA comes seeded with a few,
         # but maybe make it a param/context/entity
+    # TODO: def handle_to_whom_issue_is_assigned(self, message):
+    # TODO: def handle_due_date_for_issue(self, message):
 
 
     def handle_most_urgent_issue(self, message):
@@ -443,10 +445,11 @@ class JIRAagentSkill(MycroftSkill):
             # TODO: strip the proj key prefix, if skill prefs
             #     indicate to do so
             #     str(thissue.key).replace(self.project_key + '-', '')
-        # TODO: now establish Context so that if user follows up with:
-        #  "when is that issue due?" or "who reported this issue?"  or
-        #  "how long ago was this reported?!"
-        #  we can give real, useful, accurate, pertinent answers.
+            self.set_context('IssueID',str(thissue.key))
+            # TODO: now establish Context so that if user follows up with:
+            #  "when is that issue due?" or "who reported this issue?"  or
+            #  "how long ago was this reported?!"
+            #  we can give real, useful, accurate, pertinent answers.
 
 
     def handle_issue_status_intent(self, message):
@@ -528,9 +531,9 @@ class JIRAagentSkill(MycroftSkill):
                     # "blocks" although there is a little start here, making
                     # the bad assumption of only one link. a lot TODO here.
                     if (len(issue.fields.issuelinks) and
-                        issue.fields.issuelinks[0].type.name.lower() == 'blocks'):
+                        issue.fields.issuelinks[0].type.name.lower() == "blocks"):
                         blocker = issue.fields.issuelinks[0].inwardIssue
-                        if blocker.fields.status.name.lower() != 'resolved':
+                        if blocker.fields.status.name.lower() != "resolved":
                             # TODO: consider dialog file for this one
                             self.speak("Also note that this issue is currently "
                                        "blocked by outstanding issue " +
