@@ -73,7 +73,8 @@ class JIRAagentSkill(MycroftSkill):
         """
         new_jira_connection = None
         if self.jira is not None:
-            LOGGER.debug("self.jira is not already None, FYI. So this is a 're-login'.")
+            LOGGER.debug("self.jira is not already None, FYI. "
+                         "So this is a 're-login'.")
         try:
             # TODO: revisit this to confirm possible initial null/none/"" ?
             if (self.settings.get("url", "") or
@@ -182,11 +183,12 @@ class JIRAagentSkill(MycroftSkill):
         # handling those and then after that, check for project prefix
         # and fill in or update via get_jira_project then use that at
         # top of the handlers as well as initialize.
-        if self.jira is None:  #actually /do/ we want this to be conditional?
+        if self.jira is None:  # actually /do/ we want this to be conditional?
             # LOGGER.debug('____' + str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
             if self.jira is None:
-                LOGGER.debug("self.jira server connection is None after call to server_login(). "
+                LOGGER.debug("self.jira server connection is None after call "
+                             "to server_login(). "
                              "Cannot proceed without server connection.")
                 self.speak_dialog("server.connection.failure")
                 raise self.ServerConnectionError("Call to server_login returned None.")
@@ -232,23 +234,23 @@ class JIRAagentSkill(MycroftSkill):
         if then.tzinfo is None:
             then = datetime.datetime(then.year, then.month, then.day, tzinfo=tzlocal())
         ago = datetime.datetime.now(then.tzinfo) - then
-        cronproximate = ''
+        cronproximate = ""
         # TODO: a bit about crossing day boundaries if 22 hours etc ago
         if ago.seconds < 0 or ago.days < 0:
             # TODO: better handle negatives, i.e., when then is in the future.
             if ago.seconds > -14400:
-                cronproximate = 'in the future, very soon.'
-            cronproximate = 'in the future.'
+                cronproximate = "in the future, very soon."
+            cronproximate = "in the future."
         elif ago.days == 0:
             if ago.seconds < 1500:
-                cronproximate = 'just minutes ago.'
+                cronproximate = "just minutes ago."
             elif ago.seconds < 7200:
-                cronproximate = 'today, very recently.'
+                cronproximate = "today, very recently."
             # TODO: add a elif "late last night" subcase
             else:
-                cronproximate = 'today.'
+                cronproximate = "today."
         else:
-            cronproximate = str(ago.days) + ' days ago.'
+            cronproximate = str(ago.days) + " days ago."
         return cronproximate
 
 
@@ -302,9 +304,10 @@ class JIRAagentSkill(MycroftSkill):
         try:
             self.establish_server_connection()
         except self.ServerConnectionError:
-            LOGGER.info("JIRA project key could not be set, connection not created. "
-                        "Even if skill loaded, it will be NON-functional until "
-                        "configuration is corrected and/or service restored.")
+            LOGGER.info("JIRA project key could not be set, because connection "
+                        "was not established. Even if skill loaded, it will "
+                        "be NON-functional until configuration is corrected "
+                        "and/or service restored.")
 
 
     def handle_status_report_intent(self, message):
@@ -314,7 +317,8 @@ class JIRAagentSkill(MycroftSkill):
             try:
                 self.establish_server_connection()
             except self.ServerConnectionError:
-                LOGGER.debug("Caught connection error exception, bailing out of intent.")
+                LOGGER.debug("Caught connection error exception, "
+                             "bailing out of intent.")
                 return None
         else:
             LOGGER.info("JIRA Server login appears to have succeded already.")
@@ -361,11 +365,11 @@ class JIRAagentSkill(MycroftSkill):
 
     def handle_issues_open_intent(self, message):
         if self.jira is None:
-            self.jira = self.server_login()
-            if self.jira is None:
-                LOGGER.debug("self.jira server connection is None. "
-                             "Cannot proceed without server connection.")
-                self.speak_dialog("server.connection.failure")
+            try:
+                self.establish_server_connection()
+            except self.ServerConnectionError:
+                LOGGER.debug("Caught connection error exception, "
+                             "bailing out of intent.")
                 return None
         else:
             LOGGER.info("JIRA Server login appears to have succeded already.")
@@ -384,13 +388,11 @@ class JIRAagentSkill(MycroftSkill):
 
     def handle_issues_overdue_intent(self, message):
         if self.jira is None:
-            LOGGER.info("Unexpectedly absent jira connection" +
-                        str(type(self)) + " :: " + str(id(self)))
-            self.jira = self.server_login()
-            if self.jira is None:
-                LOGGER.debug('self.jira server connection is None. '
-                             'Cannot proceed without server connection.')
-                self.speak_dialog("server.connection.failure")
+            try:
+                self.establish_server_connection()
+            except self.ServerConnectionError:
+                LOGGER.debug("Caught connection error exception, "
+                             "bailing out of intent.")
                 return None
         else:
             LOGGER.info("JIRA Server login appears to have succeded already.")
@@ -420,13 +422,11 @@ class JIRAagentSkill(MycroftSkill):
         # does something overdue at medium priority exceed
         # explicit high priority? Do we account for VIP factor?
         if self.jira is None:
-            LOGGER.info("Unexpectedly absent jira connection" +
-                        str(type(self)) + " :: " + str(id(self)))
-            self.jira = self.server_login()
-            if self.jira is None:
-                LOGGER.debug("self.jira server connection is None. "
-                             "Cannot proceed without server connection.")
-                self.speak_dialog("server.connection.failure")
+            try:
+                self.establish_server_connection()
+            except self.ServerConnectionError:
+                LOGGER.debug("Caught connection error exception, "
+                             "bailing out of intent.")
                 return None
         else:
             LOGGER.info("JIRA Server login appears to have succeded already.")
@@ -450,42 +450,44 @@ class JIRAagentSkill(MycroftSkill):
 
 
     def handle_issue_status_intent(self, message):
+        """Accept additional specification in the form of a JIRA
+        Issue ID number to lookup and report highlights of status
+        for that particular issue.
+        """
         if self.jira is None:
-            LOGGER.info("Unexpectedly absent jira connection" +
-                        str(type(self)) + ' :: ' + str(id(self)))
-            self.jira = self.server_login()
-            if self.jira is None:
-                LOGGER.debug("self.jira server connection is None. "
-                             "Cannot proceed without server connection.")
-                self.speak_dialog("server.connection.failure")
+            try:
+                self.establish_server_connection()
+            except self.ServerConnectionError:
+                LOGGER.debug("Caught connection error exception, "
+                             "bailing out of intent.")
                 return None
         else:
-            LOGGER.info('JIRA Server login appears to have succeded already.')
+            LOGGER.info("JIRA Server login appears to have succeded already.")
 
         def issue_id_validator(utterance):
             # Confesion: "20 characters" is an arbitrary max in this re
             return re.match(r'^[\s0-9]{1,20}$', utterance)
 
         def valid_issue_id_desc(utterance):
-            return ('A valid issue I D is an integer number.'
-                    ' No prefix, if you please.'
-                    ' I will prefix the issue I D with a predetermined'
-                    ' JIRA project name abbreviation.'
-                    ' Let us try again.')
+            return ("A valid issue I D is an integer number. "
+                    "No prefix, if you please. "
+                    "I will prefix the issue I D with a predetermined "
+                    "JIRA project name abbreviation. "
+                    "Let us try again. ")
 
-        # TODO: flexibly/fuzzily, and somewhat reliably  detect if user
+        # TODO: flexibly/fuzzily, and somewhat reliably detect if user
         # uttered the project name abbrev. prefix and just deal with it.
         issue_id = self.get_response(dialog='specify.issue',
                                      validator=issue_id_validator,
                                      on_fail=valid_issue_id_desc,
                                      num_retries=3)
         if not isinstance(issue_id, basestring):
-            LOGGER.debug('issue_id is ' + str(type(issue_id)))
+            LOGGER.debug("issue_id is " + str(type(issue_id)))
         if issue_id is None:
-            LOGGER.exception('No valid issue_id from get_response. '
-                             'Better to bail out now.')
+            LOGGER.exception("No valid issue_id from get_response. "
+                             "Better to bail out now.")
         issue_id = re.sub(r'\s+', '', issue_id)
-        LOGGER.info('Attempted issue_id understanding:  "' + issue_id + '"')
+        LOGGER.info("Attempted issue_id understanding:  '" + issue_id + "'")
         # TODO if this issue has/had a blocking issue: then examine that issue
         #   for recent resolution. If so, then mention it, and then
         #   offer to "tickle/remind/refresh" this issue
