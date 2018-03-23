@@ -184,7 +184,6 @@ class JIRAagentSkill(MycroftSkill):
         # and fill in or update via get_jira_project then use that at
         # top of the handlers as well as initialize.
         if self.jira is None:  # actually /do/ we want this to be conditional?
-            # LOGGER.debug('____' + str(type(self)) + ' :: ' + str(id(self)))
             self.jira = self.server_login()
             if self.jira is None:
                 LOGGER.debug("self.jira server connection is None after call "
@@ -336,7 +335,7 @@ class JIRAagentSkill(MycroftSkill):
         if inquiry.total < 1:
             self.speak("No JIRA issues found in the unassigned queue.")
         else:
-            self.speak(str(inquiry.total) + " issue" + ('', 's')[inquiry.total > 1] +
+            self.speak(str(inquiry.total) + " issue" + ("", "s")[inquiry.total > 1] +
                        " found in the unassigned queue.")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Latest issue is regarding: " +
@@ -348,7 +347,7 @@ class JIRAagentSkill(MycroftSkill):
         if inquiry.total < 1:
             self.speak("No overdue issues.")
         else:
-            self.speak(str(inquiry.total) + " issue" + ('', 's')[inquiry.total > 1] +
+            self.speak(str(inquiry.total) + " issue" + ("", "s")[inquiry.total > 1] +
                        " overdue!")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Most overdue issue is regarding: " +
@@ -361,8 +360,8 @@ class JIRAagentSkill(MycroftSkill):
             self.speak("No HIGH priority JIRA issues remain open.")
         else:
             self.speak(str(inquiry.total) + " high priority "
-                       "issue" + ('', 's')[inquiry.total > 1] +
-                       " remain" + ('s', '')[inquiry.total > 1] + " open!")
+                       "issue" + ("", "s")[inquiry.total > 1] +
+                       " remain" + ("s", "")[inquiry.total > 1] + " open!")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Highest priority issue is regarding: " +
                        self.clean_summary(thissue.fields.summary))
@@ -385,7 +384,7 @@ class JIRAagentSkill(MycroftSkill):
         if inquiry.total < 1:
             self.speak("No unresolved issues.")
         else:
-            self.speak(str(inquiry.total) + " issue" + ('', 's')[inquiry.total > 1] +
+            self.speak(str(inquiry.total) + " issue" + ("", "s")[inquiry.total > 1] +
                        " remain unresolved.")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Highest priority unresolved issue is regarding: " +
@@ -409,7 +408,7 @@ class JIRAagentSkill(MycroftSkill):
         if inquiry.total < 1:
             self.speak("No overdue issues.")
         else:
-            self.speak(str(inquiry.total) + " issue" + ('', 's')[inquiry.total > 1] +
+            self.speak(str(inquiry.total) + " issue" + ("", "s")[inquiry.total > 1] +
                        " overdue!")
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("Most overdue issue is regarding: " +
@@ -508,7 +507,7 @@ class JIRAagentSkill(MycroftSkill):
         except Exception:
             self.speak("Search for further details on the issue record "
                        "failed. Sorry.")
-            LOGGER.exception('JIRA issue API error!')
+            LOGGER.exception("JIRA issue API error!")
 
 
     def handle_issue_status_intent(self, message):
@@ -625,7 +624,7 @@ class JIRAagentSkill(MycroftSkill):
             except Exception:
                 self.speak("Search for further details on the issue record "
                            "failed. Sorry.")
-                LOGGER.exception('JIRA issue API error!')
+                LOGGER.exception("JIRA issue API error!")
         else:
             self.speak("I am afraid that is not a valid issue id number "
                        "or perhaps I misunderstood.")
