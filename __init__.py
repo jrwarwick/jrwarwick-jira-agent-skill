@@ -283,6 +283,7 @@ class JIRAagentSkill(MycroftSkill):
 
         due_date_for_issue = IntentBuilder("DueDateForIssueIntent").\
             require("DueDate").require("IssueID").build()
+            # optional("IssueRecordKeyword").require("DueDate").require("IssueID").build()
         self.register_intent(due_date_for_issue,
                              self.handle_due_date_for_issue)
 
@@ -706,3 +707,4 @@ def create_skill():
     Note that it's outside the class itself.
     """
     return JIRAagentSkill()
+
