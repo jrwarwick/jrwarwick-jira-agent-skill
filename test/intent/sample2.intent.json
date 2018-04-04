@@ -1,7 +1,0 @@
-{
-  "utterance": "how many open jira issues are overdue",
-  "intent_type": "IssuesOverdueIntent",
-  "intent": {
-    "OverdueKeyword": "overdue"
-  }
-}

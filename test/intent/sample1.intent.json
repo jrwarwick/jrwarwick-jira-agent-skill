@@ -1,8 +1,0 @@
-{
-  "utterance": "how many jira issues are open",
-  "intent_type": "IssuesOpenIntent",
-  "intent": {
-    "IssueRecordsKeyword": "jira issues"
-    //multivalue??
-  }
-}
