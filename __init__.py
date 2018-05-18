@@ -197,11 +197,21 @@ class JIRAagentSkill(MycroftSkill):
                 # Maybe an optional announcement of same. 
                 # or maybe only announce on init case?
         else:
-            # TODO: deeper investigation like maybe header check
-            # or a simple issues list call with exception handling
+            # So we appear to already have a JIRA server connection. 
+            # but is it actually alive/valid?
             LOGGER.debug("Although self.jira is not None, strictly speaking"
                          "it could still be pointing to invalid/expired "
-                         "connection object.")
+                         "connection object. Validating...")
+            project_key_confirmation = self.get_jira_project()
+            if project_key_confirmation == self.project_key:
+                LOGGER.debug("Everything seems to be on the level, but then "
+                             "it is odd that establish_server_connection "
+                             "was called.")
+            else:
+                LOGGER.debug("Although a self.jira connection was defined "
+                             "the project key was stale. Updating.")
+                self.project_key = project_key_confirmation 
+            # Maybe also a simple issues list call with exception handling?
 
 
     def clean_summary(self, summary_text):
@@ -415,6 +425,7 @@ class JIRAagentSkill(MycroftSkill):
                        self.clean_summary(thissue.fields.summary))
 
 
+    # TODO: def handle_oldest_open_issue(self, message):
     # TODO: def handle_how_many_open_high_priority_issues(self, message):
     # TODO: def handle_how_many_vip_issues(self, message):
     # TODO: def handle_how_many_queue_issues(self, message):
@@ -469,6 +480,7 @@ class JIRAagentSkill(MycroftSkill):
             LOGGER.info("JIRA Server login appears to have succeded already.")
 
         issue_id = message.data.get('IssueID')
+        # if still None maybe we should get_response ?
         if re.match(self.project_key + '-[0-9]+', issue_id):
             pass
         elif isinstance(int(issue_id), int):
@@ -558,6 +570,7 @@ class JIRAagentSkill(MycroftSkill):
             try:
                 issue = self.jira.issue(self.project_key + '-' + str(issue_id))
                 self.speak(self.clean_summary(issue.fields.summary))
+                self.set_context('IssueID', str(issue.key))
                 if issue.fields.resolution is None:
                     self.speak(" is not yet resolved.")
                     if issue.fields.duedate is not None:
