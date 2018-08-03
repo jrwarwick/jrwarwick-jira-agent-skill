@@ -1,5 +1,5 @@
 {
-    "name": "JIRA",
+    "name": "JIRA Agent",
     "skillMetadata": {
         "sections": [
 	    {
@@ -11,6 +11,13 @@
                         "label": "Server API URL base",
                         "value": "",
                         "placeholder": "http://serverhost.domain.tld:8080/"
+                    },
+                    {
+                        "name": "project_key",
+                        "type": "text",
+                        "label": "Project Key",
+                        "value": "",
+                        "placeholder": "JIRASD"
                     }
                 ]
             },		
