@@ -242,7 +242,7 @@ class JIRAagentSkill(MycroftSkill):
         if isinstance(then, str):
             then = dateutil.parser.parse(then)
         if then.tzinfo is None:
-            then = datetime.datetime(then.year, then.month, then.day, tzinfo=tzlocal())
+            then = datetime.datetime(then.year, then.month, then.day, tzinfo=tzlocal.get_localzone())
         ago = datetime.datetime.now(then.tzinfo) - then
         cronproximate = ""
         # TODO: a bit about crossing day boundaries if 22 hours etc ago
@@ -256,6 +256,11 @@ class JIRAagentSkill(MycroftSkill):
                 cronproximate = "just minutes ago."
             elif ago.seconds < 7200:
                 cronproximate = "today, very recently."
+            elif ago.seconds < 43200:
+                current = datetime.datetime.now(tzinfo=tzlocal.get_localzone())
+                thehour = (current - then).hour 
+                if thehour > 10 or thehour < 5:
+                    LOGGER.debug("It was very late last night! The wee hours!")
             # TODO: add a elif "late last night" subcase
             else:
                 cronproximate = "today."
@@ -497,15 +502,16 @@ class JIRAagentSkill(MycroftSkill):
         try:
             issue = self.jira.issue(issue_id)
             if issue.fields.resolution is not None:
-                self.speak("Issue is already yet resolved.")
+                self.speak("Note, issue is already resolved.")
             if issue.fields.duedate is None:
                 self.speak("Issue has no specified due date.")
                 # TODO: consult default SLA? heuristics based on report time?
-            else:    
+            else:
+                LOGGER.debug("Attempting date parse on: " + issue.fields.duedate)
                 then = dateutil.parser.parse(issue.fields.duedate)
                 if then.tzinfo is None:
                     then = datetime.datetime(then.year, then.month,
-                                             then.day, tzinfo=tzlocal())
+                                             then.day, tzinfo=tzlocal.get_localzone())
                 ago = datetime.datetime.now(then.tzinfo) - then
                 cronproximate = ''
                 if ago.days < 0:
@@ -578,7 +584,7 @@ class JIRAagentSkill(MycroftSkill):
                         then = dateutil.parser.parse(issue.fields.duedate)
                         if then.tzinfo is None:
                             then = datetime.datetime(then.year, then.month,
-                                                     then.day, tzinfo=tzlocal())
+                                                     then.day, tzinfo=tzlocal.get_localzone())
                         ago = datetime.datetime.now(then.tzinfo) - then
                         cronproximate = ''
                         if ago.days < 0:
@@ -627,7 +633,7 @@ class JIRAagentSkill(MycroftSkill):
                         then = dateutil.parser.parse(then)
                     if then.tzinfo is None:
                         then = datetime.datetime(then.year, then.month,
-                                                 then.day, tzinfo=tzlocal())
+                                                 then.day, tzinfo=tzlocal.get_localzone())
                     if then.year == datetime.datetime.now(then.tzinfo).year:
                         ago = datetime.datetime.now(then.tzinfo) - then
                         if ago.days < 7:
