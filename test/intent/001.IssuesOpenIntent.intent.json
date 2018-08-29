@@ -6,5 +6,6 @@
     "OpenKeyword": "open"
   },
   "expected_response": ".*unresolved.*",
+  "evaluation_timeout": 6
 }
 

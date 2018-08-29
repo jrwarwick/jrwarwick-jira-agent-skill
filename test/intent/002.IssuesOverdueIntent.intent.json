@@ -6,5 +6,5 @@
     "IssueRecordsKeyword": "jira issues"
   },
   "expected_response": ".*overdue.*",
+  "evaluation_timeout": 6
 }
-
