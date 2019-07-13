@@ -447,6 +447,8 @@ class JIRAagentSkill(MycroftSkill):
             thissue = self.jira.issue(inquiry[0].key, fields='summary,comment')
             self.speak("The highest priority issue is " + str(thissue.key) +
                        " regarding: " + self.clean_summary(thissue.fields.summary))
+            LOGGER.info("Issue type:  " + ",".join(thissue.__dict__.keys()) )
+            LOGGER.info("Issue type:  " + ",".join(thissue.fields.__dict__.keys()) )
             # TODO: strip the proj key prefix, if skill prefs
             #     indicate to do so
             #     str(thissue.key).replace(self.project_key + '-', '')
@@ -661,7 +663,8 @@ class JIRAagentSkill(MycroftSkill):
         # TODO: real raise issue implementation steps:
         # Establish requestor identity
         # Get brief general description
-        # Get priority
+	# Get error messages, computernames, account names, symptom observation datetimes
+        # Get priority  (duedate?)
         # Make a quick search through open
         # (and perhaps very recently closed) issues,
         #   is this a duplicate issue?
@@ -671,6 +674,38 @@ class JIRAagentSkill(MycroftSkill):
         #     afterward want to adjust or get warm fuzzy about it
         #     they can just use pronouns and stuff.
         #   also IM tech staff, if high priority {and IM capability})
+        self.speak("well let us give it a try anyway.")
+        #TODO: make a choice here: we could ask a yes/no question: is this a problem report? vs. is this a requisition?
+        #    or we could try fancy intent analysis on the responses... or even assume problems, redirecting requisitions to a working email
+        reporter_name = self.get_response(dialog='specify.newissue.reporter_name',
+                                     #validator=issue_id_validator,
+                                     #on_fail=valid_issue_id_desc,
+                                     num_retries=3)
+        #TODO: make a college try to normalize, validate, and lookup this name
+        self.set_context('ReporterName', reporter_name)
+        issue_summary = self.get_response(dialog='specify.newissue.summary',
+                                     #validator=issue_id_validator,
+                                     #on_fail=valid_issue_id_desc,
+                                     num_retries=3)
+        self.set_context('IssueSummary', issue_summary)
+        issue_description = self.get_response(dialog='specify.newissue.description',
+                                     #validator=issue_id_validator,
+                                     #on_fail=valid_issue_id_desc,
+                                     num_retries=3)
+        self.set_context('IssueDescription', issue_description)
+        self.speak("Very good, thank you. I understand that " + reporter_name + " is having a problem with " + issue_summary)
+        self.speak("One moment please...")
+        for x in self.jira.issue_types():
+            LOGGER.debug(str(x))
+        #new_issue = self.jira.create_customer_request(project=self.project_key, summary=issue_summary,
+        #                       description=reporter_name + ' reports ' + issue_description , issuetype={'name': "Service Request"}) #Remember, this is JSD oriented, and this is the OotB type. Maybe parameterize this default later?
+        #new_issue = self.jira.create_issue(project=self.project_key, summary=issue_summary,
+        #                       description=reporter_name + ' reports ' + issue_description , issuetype={'name': "Service Request"}) #Remember, this is JSD oriented, and this is the OotB type. Maybe parameterize this default later?
+        new_issue = self.jira.create_issue(project=self.project_key, summary=issue_summary,
+                               description=reporter_name + ' reports ' + issue_description , issuetype={'id': 10001}) #Remember, this is JSD oriented, and this is the OotB type. Maybe parameterize this default later?
+        LOGGER.info("JIRA issue creation: ", new_issue.issueKey)
+        self.speak("Refer to issue key " + new_issue.issueKey + " for status and updates.")
+	#TODO: maybe afix a jira tag for origin (ai voice assistant, instead of collector)? or if not specified, optional description appendix
 
 
     def handle_contact_info_intent(self, message):
