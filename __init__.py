@@ -34,6 +34,14 @@ import dateutil.parser
 
 __author__ = 'jrwarwick'
 
+# Some general TODO items:
+#  - have some more issue key context setting. test it some.
+#  - new intent: RequestEscalation/increaseUrgency 
+#  - identity guessing utility function. Try some fuzzy matching methods 
+#  to see if we can determine if an arbitrary string is probably 
+#  "this person" in the directory. could be useful for raising an issue,
+#  but possibly also some day some kind of comprehension of issue comments.
+
 # Logger: used for debug lines, like "LOGGER.debug(xyz)". These
 # statements will show up in the command line when running Mycroft.
 LOGGER = getLogger(__name__)
@@ -171,7 +179,20 @@ class JIRAagentSkill(MycroftSkill):
         #  check for connection, return None if not connected? or allow
         #  the exception? or check for connection but /throw/ a logical
         #  exception?
-        return self.jira.projects()[0].key
+        target_project_key = self.settings.get("project_key").strip().upper()
+        #TODO: string validation, maybe some validation rules from Atlassian, too?
+        #TODO: redo this to throw an exception if not found, refactor calls to this
+        #      function to make a little note of that ,then default to 0
+        # start with the default...
+        project_index = 0
+        if target_project_key:
+            for pindex, proj in enumerate(self.jira.projects()):
+                if proj.key == target_project_key:
+                    project_index = pindex
+        else:
+            LOGGER.info("No JIRA project specified, defaulting to project at index " + project_index)
+        return self.jira.projects()[project_index].key
+
 
     def establish_server_connection(self):
         """Series of standard actions including login, but a few things
@@ -636,76 +657,87 @@ class JIRAagentSkill(MycroftSkill):
         """Collect enough information to create an issue record,
         then use the JIRA web API to create the issue record.
         """
-        self.speak("Unfortunately, I do not yet have the ability to file " +
-                   "an issue record by myself.")
-        # Should interim contact info lines just below just be
-        # a call to the function handle_contact_info_intent?
-        telephone_number = self.settings.get("support_telephone", "")
-        # TODO: pull from settings, but also have some kind of fallback.
-        # check and fallback on telephone number
-
-        email_address = ' '.join(list(self.settings.get("support_email", "")))
-        email_address = email_address.replace('.', 'dot')
-        # TODO: once the core pronounce_email method is available,
-        # replace this naive spell-out approach
-        data = {'telephone_number': telephone_number,
-                'email_address': email_address}
-        self.speak_dialog("human.contact.info", data)
-
-        self.enclosure.deactivate_mouth_events()
-        self.enclosure.mouth_text(telephone_number)
-        time.sleep((self.LETTERS_PER_SCREEN + len(telephone_number)) *
-                   self.SEC_PER_LETTER)
-        mycroft.audio.wait_while_speaking()
-        self.enclosure.activate_mouth_events()
-        self.enclosure.mouth_reset()
-
-        # TODO: real raise issue implementation steps:
-        # Establish requestor identity
-        # Get brief general description
-	# Get error messages, computernames, account names, symptom observation datetimes
-        # Get priority  (duedate?)
-        # Make a quick search through open
-        # (and perhaps very recently closed) issues,
-        #   is this a duplicate issue?
-        # Create Issue, display and read out ticket key/ID
-        #   (also print it out, if printer attached);
-        #   set_context() on issue id so if user immediately
-        #     afterward want to adjust or get warm fuzzy about it
-        #     they can just use pronouns and stuff.
-        #   also IM tech staff, if high priority {and IM capability})
-        self.speak("well let us give it a try anyway.")
-        #TODO: make a choice here: we could ask a yes/no question: is this a problem report? vs. is this a requisition?
-        #    or we could try fancy intent analysis on the responses... or even assume problems, redirecting requisitions to a working email
-        reporter_name = self.get_response(dialog='specify.newissue.reporter_name',
-                                     #validator=issue_id_validator,
-                                     #on_fail=valid_issue_id_desc,
-                                     num_retries=3)
-        #TODO: make a college try to normalize, validate, and lookup this name
-        self.set_context('ReporterName', reporter_name)
-        issue_summary = self.get_response(dialog='specify.newissue.summary',
-                                     #validator=issue_id_validator,
-                                     #on_fail=valid_issue_id_desc,
-                                     num_retries=3)
-        self.set_context('IssueSummary', issue_summary)
-        issue_description = self.get_response(dialog='specify.newissue.description',
-                                     #validator=issue_id_validator,
-                                     #on_fail=valid_issue_id_desc,
-                                     num_retries=3)
-        self.set_context('IssueDescription', issue_description)
-        self.speak("Very good, thank you. I understand that " + reporter_name + " is having a problem with " + issue_summary)
-        self.speak("One moment please...")
-        for x in self.jira.issue_types():
-            LOGGER.debug(str(x))
-        #new_issue = self.jira.create_customer_request(project=self.project_key, summary=issue_summary,
-        #                       description=reporter_name + ' reports ' + issue_description , issuetype={'name': "Service Request"}) #Remember, this is JSD oriented, and this is the OotB type. Maybe parameterize this default later?
-        #new_issue = self.jira.create_issue(project=self.project_key, summary=issue_summary,
-        #                       description=reporter_name + ' reports ' + issue_description , issuetype={'name': "Service Request"}) #Remember, this is JSD oriented, and this is the OotB type. Maybe parameterize this default later?
-        new_issue = self.jira.create_issue(project=self.project_key, summary=issue_summary,
-                               description=reporter_name + ' reports ' + issue_description , issuetype={'id': 10001}) #Remember, this is JSD oriented, and this is the OotB type. Maybe parameterize this default later?
-        LOGGER.info("JIRA issue creation: ", new_issue.issueKey)
-        self.speak("Refer to issue key " + new_issue.issueKey + " for status and updates.")
-	#TODO: maybe afix a jira tag for origin (ai voice assistant, instead of collector)? or if not specified, optional description appendix
+        if self.settings.get("enable_issue_creation"):
+            self.speak("Unfortunately, I do not yet have the ability to file " +
+                       "an issue record by myself.")
+            # Should interim contact info lines just below just be
+            # a call to the function handle_contact_info_intent?
+            telephone_number = self.settings.get("support_telephone", "")
+            # TODO: pull from settings, but also have some kind of fallback.
+            # check and fallback on telephone number
+    
+            email_address = ' '.join(list(self.settings.get("support_email", "")))
+            email_address = email_address.replace('.', 'dot')
+            # TODO: once the core pronounce_email method is available,
+            # replace this naive spell-out approach
+            data = {'telephone_number': telephone_number,
+                    'email_address': email_address}
+            self.speak_dialog("human.contact.info", data)
+    
+            self.enclosure.deactivate_mouth_events()
+            self.enclosure.mouth_text(telephone_number)
+            time.sleep((self.LETTERS_PER_SCREEN + len(telephone_number)) *
+                       self.SEC_PER_LETTER)
+            mycroft.audio.wait_while_speaking()
+            self.enclosure.activate_mouth_events()
+            self.enclosure.mouth_reset()
+        else:
+            # TODO: real raise issue implementation steps:
+            # Establish requestor identity
+            # Get brief general description
+    	# Get error messages, computernames, account names, symptom observation datetimes
+            # Get priority  (duedate?)
+            # Make a quick search through open
+            # (and perhaps very recently closed) issues,
+            #   is this a duplicate issue?
+            # Create Issue, display and read out ticket key/ID
+            #   (also print it out, if printer attached);
+            #   set_context() on issue id so if user immediately
+            #     afterward want to adjust or get warm fuzzy about it
+            #     they can just use pronouns and stuff.
+            #   also IM tech staff, if high priority {and IM capability})
+            self.speak("Very good. Let us begin by gathering some information.")
+            #TODO: make a choice here: we could ask a yes/no question: is this a problem report? vs. is this a requisition?
+            #    or we could try fancy intent analysis on the responses... or even assume problems, redirecting requisitions to a working email
+            reporter_name = self.get_response(dialog='specify.newissue.reporter_name',
+                                         #validator=issue_id_validator,
+                                         #on_fail=valid_issue_id_desc,
+                                         num_retries=3)
+            reporter_name = reporter_name.title()
+            #TODO: make a college try to normalize, validate, and lookup this name
+            self.set_context('ReporterName', reporter_name)
+            issue_summary = self.get_response(dialog='specify.newissue.summary',
+                                         #validator=issue_id_validator,
+                                         #on_fail=valid_issue_id_desc,
+                                         num_retries=3)
+            self.set_context('IssueSummary', issue_summary)
+            issue_description = self.get_response(dialog='specify.newissue.description',
+                                         #validator=issue_id_validator,
+                                         #on_fail=valid_issue_id_desc,
+                                         num_retries=3)
+            self.set_context('IssueDescription', issue_description)
+            self.speak("Very good, thank you. I understand that " + reporter_name + " is having a problem with " + issue_summary)
+            self.speak("One moment please...")
+            LOGGER.debug("--issue types listing in " + self.project_key + "--")
+            for x in self.jira.issue_types():
+                LOGGER.debug(str(x))
+            #LOGGER.debug("createmeta:" + self.jira.createmeta(projectKeys=self.project_key)) ##, projectIds=['TestCase'],expand=None)
+            #TODO try the create_customer_request method, right now getting a not valid request type with plain create issue
+            #new_issue = self.jira.create_customer_request(project=self.project_key, summary=issue_summary,
+            #                       description=reporter_name + ' reports ' + issue_description , issuetype={'name': "Service Request"}) #Remember, this is JSD oriented, and this is the OotB type. Maybe parameterize this default later?
+            new_issue = self.jira.create_issue(project=self.project_key, summary=issue_summary,
+                                   description=reporter_name + ' reports ' + issue_description , issuetype={'name': "Service Request"}) #Remember, this is JSD oriented, and this is the OotB type. Maybe parameterize this default later?
+            LOGGER.info("JIRA issue creation: ", new_issue.key)
+            self.set_context('IssueKey', new_issue.key)
+            self.speak("Alright, I have created the issue record for you.")
+            self.speak("Refer to issue key " + new_issue.key + " for status and updates.")
+            #TODO: maybe afix a jira tag for origin (ai voice assistant, instead of collector)? or if not specified, optional description appendix
+            #TODO: set the context with the new key, and/or cache it as most recently created key for one hour so that user can say "what was that issue id again?"
+            #TODO: followup with one more get_response("would you like to add some contact information in case the service desk staff need to ask some diagnostic questions?") and then append as comment if they would like to.
+            #      IFF a successful id on the user, repeat back what the directory says. Optional check for presence of an LDAP skill/setting as well? (one day)
+            #TODO: followup with one more get_response("would you like to add any other notes to the issue?") and then append as comment if they thought of one more thing 
+            #      (or user noticed that mycroft did /not/ catch the whole final sentence of dictation
+            self.enclosure.mouth_text(new_issue.key)
 
 
     def handle_contact_info_intent(self, message):

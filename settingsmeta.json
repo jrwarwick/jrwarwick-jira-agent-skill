@@ -36,6 +36,23 @@
                 ]
             },		
             {
+                "name": "Project Preferences",
+                "fields": [
+                    {
+                        "name": "project_key",
+                        "type": "text",
+                        "label": "JIRA Project Key",
+                        "value": "ITSD"
+                    },
+                    {
+                        "name": "enable_issue_creation",
+                        "type": "checkbox",
+                        "label": "Enable issue creation",
+                        "value": "true"
+                   }
+                ]
+            },		
+            {
                 "name": "Optional Contact Information",
                 "fields": [
                     {
