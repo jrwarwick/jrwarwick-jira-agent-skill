@@ -655,10 +655,11 @@ class JIRAagentSkill(MycroftSkill):
 
     def handle_raise_issue_intent(self, message):
         """Collect enough information to create an issue record,
+        perhaps perform a little analysis on responses,
         then use the JIRA web API to create the issue record.
         """
-        if self.settings.get("enable_issue_creation"):
-            self.speak("Unfortunately, I do not yet have the ability to file " +
+        if not self.settings.get("enable_issue_creation"):
+            self.speak("Unfortunately, I do not currently have the ability to file " +
                        "an issue record by myself.")
             # Should interim contact info lines just below just be
             # a call to the function handle_contact_info_intent?
@@ -682,28 +683,39 @@ class JIRAagentSkill(MycroftSkill):
             self.enclosure.activate_mouth_events()
             self.enclosure.mouth_reset()
         else:
-            # TODO: real raise issue implementation steps:
-            # Establish requestor identity
-            # Get brief general description
-    	# Get error messages, computernames, account names, symptom observation datetimes
-            # Get priority  (duedate?)
-            # Make a quick search through open
-            # (and perhaps very recently closed) issues,
-            #   is this a duplicate issue?
-            # Create Issue, display and read out ticket key/ID
-            #   (also print it out, if printer attached);
-            #   set_context() on issue id so if user immediately
-            #     afterward want to adjust or get warm fuzzy about it
-            #     they can just use pronouns and stuff.
-            #   also IM tech staff, if high priority {and IM capability})
+            #TODO: real raise issue implementation steps:
+            #  - Establish requestor identity
+            #  + Get brief/summary general description
+            #  + Get error messages, computernames, account names, symptom observation datetimes
+            #  - Get priority  (duedate?)
+            #  - Make a quick search through open
+            #    (and perhaps very recently closed) issues,
+            #    is this a duplicate issue?
+            #  + Create Issue, display and read out ticket key/ID
+            #  - (also print it out in hardcopy, if printer attached/configured);
+            #  - set_context() on issue id so if user immediately
+            #    afterward want to adjust or get warm fuzzy about it
+            #    they can just use pronouns and stuff.
+            #  - also IM tech staff, if high priority {and IM capability})
             self.speak("Very good. Let us begin by gathering some information.")
-            #TODO: make a choice here: we could ask a yes/no question: is this a problem report? vs. is this a requisition?
+            #TODO: make a design choice here: we could ask a yes/no question: 
+            #    is this a problem report? vs. is this a requisition?
             #    or we could try fancy intent analysis on the responses... or even assume problems, redirecting requisitions to a working email
             reporter_name = self.get_response(dialog='specify.newissue.reporter_name',
                                          #validator=issue_id_validator,
                                          #on_fail=valid_issue_id_desc,
                                          num_retries=3)
             reporter_name = reporter_name.title()
+            userlookup = ""
+            try:
+                userlookup = self.jira.search_users(reporter_name,0,4)
+                for x in userlookup:
+                    LOGGER.info(x.key + " ;  " + x.displayName + " ; " + x.emailAddress)
+                if len(userlookup) == 1:
+                    probable_user = userlookup[0]
+            except:
+                LOGGER.debug("Could not get a lookup on user. Try again? or ?")
+            #LOGGER.info( " ; ".join(self.jira.search_users(reporter_name,0,4)) )
             #TODO: make a college try to normalize, validate, and lookup this name
             self.set_context('ReporterName', reporter_name)
             issue_summary = self.get_response(dialog='specify.newissue.summary',
@@ -715,30 +727,37 @@ class JIRAagentSkill(MycroftSkill):
                                          #validator=issue_id_validator,
                                          #on_fail=valid_issue_id_desc,
                                          num_retries=3)
+            #TODO: some regex'n for "(very|extremely|quite)* (high priority|urgent)" , yet NOT preceded by a negation. Actually set issue priority to high
             self.set_context('IssueDescription', issue_description)
             self.speak("Very good, thank you. I understand that " + reporter_name + " is having a problem with " + issue_summary)
-            self.speak("One moment please...")
-            LOGGER.debug("--issue types listing in " + self.project_key + "--")
-            for x in self.jira.issue_types():
-                LOGGER.debug(str(x))
-            #LOGGER.debug("createmeta:" + self.jira.createmeta(projectKeys=self.project_key)) ##, projectIds=['TestCase'],expand=None)
+            self.speak("One moment please while I file this ...")
+            # Remember, this is JSD oriented, and we will start with the OotB types. Maybe parameterize this default later?
+            # could be challenging to expose in the configuration, what with possible custom types for each installation.
             #TODO try the create_customer_request method, right now getting a not valid request type with plain create issue
             #new_issue = self.jira.create_customer_request(project=self.project_key, summary=issue_summary,
-            #                       description=reporter_name + ' reports ' + issue_description , issuetype={'name': "Service Request"}) #Remember, this is JSD oriented, and this is the OotB type. Maybe parameterize this default later?
+            #                       description=reporter_name + ' reports ' + issue_description , issuetype={'name': "Service Request"}) 
             new_issue = self.jira.create_issue(project=self.project_key, summary=issue_summary,
-                                   description=reporter_name + ' reports ' + issue_description , issuetype={'name': "Service Request"}) #Remember, this is JSD oriented, and this is the OotB type. Maybe parameterize this default later?
+                                   description=reporter_name + ' reports ' + issue_description , issuetype={'name': "Service Request"}) 
             LOGGER.info("JIRA issue creation: ", new_issue.key)
             self.set_context('IssueKey', new_issue.key)
             self.speak("Alright, I have created the issue record for you.")
             self.speak("Refer to issue key " + new_issue.key + " for status and updates.")
+            if probable_user is not None:
+                self.speak(" Updates will also be sent via email to " + probable_user.emailAddress)
             #TODO: maybe afix a jira tag for origin (ai voice assistant, instead of collector)? or if not specified, optional description appendix
             #TODO: set the context with the new key, and/or cache it as most recently created key for one hour so that user can say "what was that issue id again?"
             #TODO: followup with one more get_response("would you like to add some contact information in case the service desk staff need to ask some diagnostic questions?") and then append as comment if they would like to.
             #      IFF a successful id on the user, repeat back what the directory says. Optional check for presence of an LDAP skill/setting as well? (one day)
             #TODO: followup with one more get_response("would you like to add any other notes to the issue?") and then append as comment if they thought of one more thing 
             #      (or user noticed that mycroft did /not/ catch the whole final sentence of dictation
+            self.enclosure.deactivate_mouth_events()
             self.enclosure.mouth_text(new_issue.key)
-
+            time.sleep((self.LETTERS_PER_SCREEN + len(new_issue.key)) *
+                       self.SEC_PER_LETTER)
+            mycroft.audio.wait_while_speaking()
+            self.enclosure.activate_mouth_events()
+            self.enclosure.mouth_reset()
+    
 
     def handle_contact_info_intent(self, message):
         """Just reply with a summary of key contact information for
