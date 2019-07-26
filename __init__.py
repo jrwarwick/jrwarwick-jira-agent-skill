@@ -249,7 +249,7 @@ class JIRAagentSkill(MycroftSkill):
         RETURN string which is a speakable, natural clause of form "X days ago"
         """
         # is this "overloading" method pythonic? and/or "GoodProgramming(R)TM"?
-        if isinstance(then, basestring):
+        if isinstance(then, str):
             then = dateutil.parser.parse(then)
         if then.tzinfo is None:
             then = datetime.datetime(then.year, then.month, then.day, tzinfo=tzlocal())
@@ -549,7 +549,8 @@ class JIRAagentSkill(MycroftSkill):
             LOGGER.info("JIRA Server login appears to have succeded already.")
 
         def issue_id_validator(utterance):
-            # Confesion: "20 characters" is an arbitrary max in this re
+            LOGGER.debug("  validation in progress")
+            # Confession: "20 characters" is an arbitrary max in this re
             return re.match(r'^[\s0-9]{1,20}$', utterance)
 
         def valid_issue_id_desc(utterance):
@@ -565,7 +566,7 @@ class JIRAagentSkill(MycroftSkill):
                                      validator=issue_id_validator,
                                      on_fail=valid_issue_id_desc,
                                      num_retries=3)
-        if not isinstance(issue_id, basestring):
+        if not isinstance(issue_id, str):
             LOGGER.debug("issue_id is " + str(type(issue_id)))
         if issue_id is None:
             LOGGER.exception("No valid issue_id from get_response. "
@@ -632,7 +633,7 @@ class JIRAagentSkill(MycroftSkill):
                     # current year, or "January 21st, 2018" if outside
                     # of current year.
                     then = issue.fields.resolutiondate
-                    if isinstance(then, basestring):
+                    if isinstance(then, str):
                         then = dateutil.parser.parse(then)
                     if then.tzinfo is None:
                         then = datetime.datetime(then.year, then.month,
