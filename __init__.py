@@ -729,8 +729,14 @@ class JIRAagentSkill(MycroftSkill):
                                          num_retries=3)
             #TODO: some regex'n for "(very|extremely|quite)* (high priority|urgent)" , yet NOT preceded by a negation. Actually set issue priority to high
             self.set_context('IssueDescription', issue_description)
-            self.speak("Very good, thank you. I understand that " + reporter_name + " is having a problem with " + issue_summary)
-            self.speak("One moment please while I file this ...")
+            #TODO: it would be nice to say "having a problem with" but only when we are sure its a problem not a requisition
+            rephrased_summary = re.sub(r'^(please |i need )*(help |assistance )*(with |for )*(my )*','',issue_summary)
+            rephrased_summary = re.sub(r'^(need a )*(new |replacement |better )*','acquiring ',rephrased_summary)
+            rephrased_summary = re.sub(r' (please|quickly)*$','', rephrased_summary)
+            self.speak("Very good, thank you. I understand that " + reporter_name +
+                       " is needs help with " + rephrased_summary)
+            #TODO: work on above regex that normalizes the grammar and removes the extraneous social-only markers.
+            ##self.speak("One moment please while I file this ...")
             # Remember, this is JSD oriented, and we will start with the OotB types. Maybe parameterize this default later?
             # could be challenging to expose in the configuration, what with possible custom types for each installation.
             #TODO try the create_customer_request method, right now getting a not valid request type with plain create issue
@@ -750,6 +756,7 @@ class JIRAagentSkill(MycroftSkill):
             #      IFF a successful id on the user, repeat back what the directory says. Optional check for presence of an LDAP skill/setting as well? (one day)
             #TODO: followup with one more get_response("would you like to add any other notes to the issue?") and then append as comment if they thought of one more thing 
             #      (or user noticed that mycroft did /not/ catch the whole final sentence of dictation
+            #TODO: the speech calls appear to append to a speech queue, but return more or less immediately. However, these enclosure/mouth calls do not get queued, and execute immediately. This results in the mouth shutting off right in the middle of the above longer speeches, not in sync with the point where he is actually talking about the issue ID
             self.enclosure.deactivate_mouth_events()
             self.enclosure.mouth_text(new_issue.key)
             time.sleep((self.LETTERS_PER_SCREEN + len(new_issue.key)) *
