@@ -560,6 +560,7 @@ class JIRAagentSkill(MycroftSkill):
                     "JIRA project name abbreviation. "
                     "Let us try again. ")
 
+        # TODO: check to see if context is already set for IssueID
         # TODO: flexibly/fuzzily, and somewhat reliably detect if user
         # uttered the project name abbrev. prefix and just deal with it.
         issue_id = self.get_response(dialog='specify.issue',
@@ -746,7 +747,7 @@ class JIRAagentSkill(MycroftSkill):
             new_issue = self.jira.create_issue(project=self.project_key, summary=issue_summary,
                                    description=reporter_name + ' reports ' + issue_description , issuetype={'name': "Service Request"}) 
             LOGGER.info("JIRA issue creation: ", new_issue.key)
-            self.set_context('IssueKey', new_issue.key)
+            self.set_context('IssueID', new_issue.key)
             self.speak("Alright, I have created the issue record for you.")
             self.speak("Refer to issue key " + new_issue.key + " for status and updates.")
             if probable_user is not None:
