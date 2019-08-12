@@ -474,7 +474,7 @@ class JIRAagentSkill(MycroftSkill):
             #     indicate to do so
             #     str(thissue.key).replace(self.project_key + '-', '')
             self.set_context('IssueID', str(thissue.key))
-            # TODO: now establish Context so that if user follows up with:
+            # TODO: now confirm Context is sufficient so that if user follows up with:
             #  "when is that issue due?" or "who reported this issue?"  or
             #  "how long ago was this reported?!"
             #  we can give real, useful, accurate, pertinent answers.
@@ -708,7 +708,9 @@ class JIRAagentSkill(MycroftSkill):
                                          #on_fail=valid_issue_id_desc,
                                          num_retries=3)
             reporter_name = reporter_name.title()
-            userlookup = ""
+            userlookup = None
+            probable_user = None
+            issue_description_supplemental = None
             try:
                 userlookup = self.jira.search_users(reporter_name,0,4)
                 for x in userlookup:
@@ -717,6 +719,12 @@ class JIRAagentSkill(MycroftSkill):
                     probable_user = userlookup[0]
             except:
                 LOGGER.debug("Could not get a lookup on user. Try again? or ?")
+                self.speak("Apologies, I could not find that name, or perhaps I misunderstood it. I will leave a note in the description, but the reporter field will start out with a generic name.")
+                issue_description_supplemental = "\n\nReporter could not be clearly identified, but the name noted was: " + reporter_name + "."
+            #if probable_user is None:
+            if len(userlookup) < 1:
+                self.speak("Apologies, I could not find that name, or perhaps I misunderstood it. I will leave a note in the description, but the reporter field will start out with a generic name.")
+                issue_description_supplemental = "\n\nReporter could not be clearly identified, but the name noted was: " + reporter_name + "."
             #LOGGER.info( " ; ".join(self.jira.search_users(reporter_name,0,4)) )
             #TODO: make a college try to normalize, validate, and lookup this name
             self.set_context('ReporterName', reporter_name)
@@ -725,6 +733,7 @@ class JIRAagentSkill(MycroftSkill):
                                          #on_fail=valid_issue_id_desc,
                                          num_retries=3)
             self.set_context('IssueSummary', issue_summary)
+
             issue_description = self.get_response(dialog='specify.newissue.description',
                                          #validator=issue_id_validator,
                                          #on_fail=valid_issue_id_desc,
@@ -736,7 +745,7 @@ class JIRAagentSkill(MycroftSkill):
             rephrased_summary = re.sub(r'^(need a )*(new |replacement |better )*','acquiring ',rephrased_summary)
             rephrased_summary = re.sub(r' (please|quickly)*$','', rephrased_summary)
             self.speak("Very good, thank you. I understand that " + reporter_name +
-                       " is needs help with " + rephrased_summary)
+                       " requires assistance with " + rephrased_summary)
             #TODO: work on above regex that normalizes the grammar and removes the extraneous social-only markers.
             ##self.speak("One moment please while I file this ...")
             # Remember, this is JSD oriented, and we will start with the OotB types. Maybe parameterize this default later?
@@ -745,13 +754,19 @@ class JIRAagentSkill(MycroftSkill):
             #new_issue = self.jira.create_customer_request(project=self.project_key, summary=issue_summary,
             #                       description=reporter_name + ' reports ' + issue_description , issuetype={'name': "Service Request"}) 
             new_issue = self.jira.create_issue(project=self.project_key, summary=issue_summary,
-                                   description=reporter_name + ' reports ' + issue_description , issuetype={'name': "Service Request"}) 
+                                   description=reporter_name + ' reports ' + issue_description + issue_description_supplemental , issuetype={'name': "Service Request"}) 
             LOGGER.info("JIRA issue creation: ", new_issue.key)
             self.set_context('IssueID', new_issue.key)
             self.speak("Alright, I have created the issue record for you.")
             self.speak("Refer to issue key " + new_issue.key + " for status and updates.")
             if probable_user is not None:
+                #TODO: update the issue to have reporter = probable_user
                 self.speak(" Updates will also be sent via email to " + probable_user.emailAddress)
+            else:
+                LOGGER.debug("The default for reporter is the logged in user who makes the call to create_issue, which will be the automation svc user." + self.settings.get("username", "") + ".  Good enough for now.")
+                #However, we may later wish to give the admin an option to configure an alternate dummy user and/or "SD manager" or "SD receptionist" to receive these issues immediately for more "ownership". 
+                #This would be an addition to the settingsmeta
+
             #TODO: maybe afix a jira tag for origin (ai voice assistant, instead of collector)? or if not specified, optional description appendix
             #TODO: set the context with the new key, and/or cache it as most recently created key for one hour so that user can say "what was that issue id again?"
             #TODO: followup with one more get_response("would you like to add some contact information in case the service desk staff need to ask some diagnostic questions?") and then append as comment if they would like to.
