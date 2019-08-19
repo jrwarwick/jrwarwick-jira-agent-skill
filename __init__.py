@@ -739,6 +739,7 @@ class JIRAagentSkill(MycroftSkill):
                                          #on_fail=valid_issue_id_desc,
                                          num_retries=3)
             #TODO: some regex'n for "(very|extremely|quite)* (high priority|urgent)" , yet NOT preceded by a negation. Actually set issue priority to high
+            #      or perhaps mark this for a follow-up question where mycroft confirms/inquires that the the user does indeed desire high priority.
             self.set_context('IssueDescription', issue_description)
             #TODO: it would be nice to say "having a problem with" but only when we are sure its a problem not a requisition
             rephrased_summary = re.sub(r'^(please |i need )*(help |assistance )*(with |for )*(my )*','',issue_summary)
@@ -754,7 +755,8 @@ class JIRAagentSkill(MycroftSkill):
             #new_issue = self.jira.create_customer_request(project=self.project_key, summary=issue_summary,
             #                       description=reporter_name + ' reports ' + issue_description , issuetype={'name': "Service Request"}) 
             new_issue = self.jira.create_issue(project=self.project_key, summary=issue_summary,
-                                   description=reporter_name + ' reports ' + issue_description + issue_description_supplemental , issuetype={'name': "Service Request"}) 
+                                   description=reporter_name + ' reports ' + issue_description + (issue_description_supplemental if issue_description_supplemental else ''),
+                                   issuetype={'name': "Service Request"}) 
             LOGGER.info("JIRA issue creation: ", new_issue.key)
             self.set_context('IssueID', new_issue.key)
             self.speak("Alright, I have created the issue record for you.")
