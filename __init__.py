@@ -180,9 +180,13 @@ class JIRAagentSkill(MycroftSkill):
         #  the exception? or check for connection but /throw/ a logical
         #  exception?
         target_project_key = self.settings.get("project_key").strip().upper()
-        #TODO: string validation, maybe some validation rules from Atlassian, too?
+        if re.match('^[A-Z]{1}[A-Z0-9]+$', target_project_key):
+            LOGGER.debug(target_project_key + " appears to be validly formatted string for a jira project key.")
+        else:
+            LOGGER.info(target_project_key + " appears to be INVALIDLY formatted string for a jira project key!")
+        #TODO: maybe some validation rules from Atlassian, too?
         #TODO: redo this to throw an exception if not found, refactor calls to this
-        #      function to make a little note of that ,then default to 0
+        #      function to make a little note of that ,then default to 0 as a "best effort."
         # start with the default...
         project_index = 0
         if target_project_key:
@@ -266,7 +270,8 @@ class JIRAagentSkill(MycroftSkill):
                 cronproximate = "just minutes ago."
             elif ago.seconds < 7200:
                 cronproximate = "today, very recently."
-            # TODO: add a elif "late last night" subcase
+            # TODO: add a elif "late last night" subcase.
+            #       something like if then.hour > locale's 10:00pm but before 4:00am today
             else:
                 cronproximate = "today."
         else:
@@ -507,7 +512,9 @@ class JIRAagentSkill(MycroftSkill):
         try:
             issue = self.jira.issue(issue_id)
             if issue.fields.resolution is not None:
-                self.speak("Issue is already yet resolved.")
+                self.speak("Issue is already resolved.")
+                #TODO: put in a mention of recentness if within the last hour, 
+                # or ancientness if more than 90 days
             if issue.fields.duedate is None:
                 self.speak("Issue has no specified due date.")
                 # TODO: consult default SLA? heuristics based on report time?
@@ -560,6 +567,8 @@ class JIRAagentSkill(MycroftSkill):
                     "JIRA project name abbreviation. "
                     "Let us try again. ")
 
+        issue_id = message.data.get('IssueID')
+        LOGGER.debug(" did we actually have this context? " + ("NONE" if (issue_id is None) else issue_id))
         # TODO: check to see if context is already set for IssueID
         # TODO: flexibly/fuzzily, and somewhat reliably detect if user
         # uttered the project name abbrev. prefix and just deal with it.
@@ -742,8 +751,13 @@ class JIRAagentSkill(MycroftSkill):
             #      or perhaps mark this for a follow-up question where mycroft confirms/inquires that the the user does indeed desire high priority.
             self.set_context('IssueDescription', issue_description)
             #TODO: it would be nice to say "having a problem with" but only when we are sure its a problem not a requisition
-            rephrased_summary = re.sub(r'^(please |i need )*(help |assistance )*(with |for )*(my )*','',issue_summary)
-            rephrased_summary = re.sub(r'^(need a )*(new |replacement |better )*','acquiring ',rephrased_summary)
+            rephrased_summary = re.sub(r'^(I |we )*','',issue_summary)
+            if re.match(r'^(please |need )*(help |assistance )*(with |for )*(my )*'):
+                rephrased_summary = re.sub(r'^(please |need )*(help |assistance )*(with |for )*(my )*','',issue_summary)
+                LOGGER.debug("inference: the user is requesting assistance with a problem/incident (/not/ a requisition)")
+            if re.match(r'^(need a )*(new |replacement |better )*'):
+                rephrased_summary = re.sub(r'^(need a )*(new |replacement |better )*','acquiring ',rephrased_summary)
+                LOGGER.debug("inference: the user is issuing requisition (not a plea for help)")
             rephrased_summary = re.sub(r' (please|quickly)*$','', rephrased_summary)
             self.speak("Very good, thank you. I understand that " + reporter_name +
                        " requires assistance with " + rephrased_summary)
