@@ -694,20 +694,23 @@ class JIRAagentSkill(MycroftSkill):
             self.enclosure.activate_mouth_events()
             self.enclosure.mouth_reset()
         else:
-            #TODO: real raise issue implementation steps:
+            #Raise Issue steps summary: 
             #  - Establish requestor identity
             #  + Get brief/summary general description
-            #  + Get error messages, computernames, account names, symptom observation datetimes
-            #  - Get priority  (duedate?)
-            #  - Make a quick search through open
-            #    (and perhaps very recently closed) issues,
+            #  + Get longer description: error messages, computernames, account names, symptom observation datetimes
+            #  - Get priority  (duedate?) (simple, or impact/urgency model? Or make this configurable option?)
+            #  - Make a quick search through open 
+            #    (and perhaps very recently closed) issues;
             #    is this a duplicate issue?
             #  + Create Issue, display and read out ticket key/ID
-            #  - (also print it out in hardcopy, if printer attached/configured);
+            #  - (fancy bonus: also print it out in hardcopy, if printer attached/configured);
             #  - set_context() on issue id so if user immediately
             #    afterward want to adjust or get warm fuzzy about it
             #    they can just use pronouns and stuff.
-            #  - also IM tech staff, if high priority {and IM capability})
+            #  - also IM tech staff, if high priority {and IM capability exists})
+            #  - optional review on a short delay: some jira intalls have
+            #    automation rules to auto-assign the issue. So give it a few seconds
+            #    then check on it, and report back to the reporter without being prompted.
             self.speak("Very good. Let us begin by gathering some information.")
             #TODO: make a design choice here: we could ask a yes/no question: 
             #    is this a problem report? vs. is this a requisition?
@@ -735,7 +738,8 @@ class JIRAagentSkill(MycroftSkill):
                 self.speak("Apologies, I could not find that name, or perhaps I misunderstood it. I will leave a note in the description, but the reporter field will start out with a generic name.")
                 issue_description_supplemental = "\n\nReporter could not be clearly identified, but the name noted was: " + reporter_name + "."
             #LOGGER.info( " ; ".join(self.jira.search_users(reporter_name,0,4)) )
-            #TODO: make a college try to normalize, validate, and lookup this name
+            #TODO: make a college try to normalize, validate, and lookup this name. 
+            #      Maybe even some soundex?
             self.set_context('ReporterName', reporter_name)
             issue_summary = self.get_response(dialog='specify.newissue.summary',
                                          #validator=issue_id_validator,
@@ -747,15 +751,15 @@ class JIRAagentSkill(MycroftSkill):
                                          #validator=issue_id_validator,
                                          #on_fail=valid_issue_id_desc,
                                          num_retries=3)
-            #TODO: some regex'n for "(very|extremely|quite)* (high priority|urgent)" , yet NOT preceded by a negation. Actually set issue priority to high
+            #TODO: some regex'n for "(very|extremely|quite|badly needed)* (high priority|urgent|desparately)" , yet NOT preceded by a negation. Actually set issue priority to high
             #      or perhaps mark this for a follow-up question where mycroft confirms/inquires that the the user does indeed desire high priority.
             self.set_context('IssueDescription', issue_description)
             #TODO: it would be nice to say "having a problem with" but only when we are sure its a problem not a requisition
             rephrased_summary = re.sub(r'^(I |we )*','',issue_summary)
-            if re.match(r'^(please |need )*(help |assistance )*(with |for )*(my )*'):
+            if re.match(r'^(please |need )*(help |assistance )*(with |for )*(my )*', rephrased_summary):
                 rephrased_summary = re.sub(r'^(please |need )*(help |assistance )*(with |for )*(my )*','',issue_summary)
                 LOGGER.debug("inference: the user is requesting assistance with a problem/incident (/not/ a requisition)")
-            if re.match(r'^(need a )*(new |replacement |better )*'):
+            if re.match(r'^(need a )*(new |replacement |better )*', rephrased_summary):
                 rephrased_summary = re.sub(r'^(need a )*(new |replacement |better )*','acquiring ',rephrased_summary)
                 LOGGER.debug("inference: the user is issuing requisition (not a plea for help)")
             rephrased_summary = re.sub(r' (please|quickly)*$','', rephrased_summary)
@@ -776,8 +780,11 @@ class JIRAagentSkill(MycroftSkill):
             self.speak("Alright, I have created the issue record for you.")
             self.speak("Refer to issue key " + new_issue.key + " for status and updates.")
             if probable_user is not None:
-                #TODO: update the issue to have reporter = probable_user
                 self.speak(" Updates will also be sent via email to " + probable_user.emailAddress)
+                # Nothing to do here, per se, but sadly, a bug in the library: 
+                #   cannot set reporter, assignee gets set instead!
+                #   https://github.com/pycontribs/jira/issues/404
+                new_issue.update(reporter=probable_user.name)
             else:
                 LOGGER.debug("The default for reporter is the logged in user who makes the call to create_issue, which will be the automation svc user." + self.settings.get("username", "") + ".  Good enough for now.")
                 #However, we may later wish to give the admin an option to configure an alternate dummy user and/or "SD manager" or "SD receptionist" to receive these issues immediately for more "ownership". 
