@@ -3,5 +3,7 @@
   "intent_type": "StatusReportIntent",
   "intent": {
     "StatusReportKeyword": "jira status"
-  }
+  },
+  "expected_response": "JIRA Service Desk status report",
+  "evaluation_timeout": 20
 }
