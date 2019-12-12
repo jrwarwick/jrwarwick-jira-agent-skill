@@ -784,7 +784,7 @@ class JIRAagentSkill(MycroftSkill):
                 # Nothing to do here, per se, but sadly, a bug in the library: 
                 #   cannot set reporter, assignee gets set instead!
                 #   https://github.com/pycontribs/jira/issues/404
-                new_issue.update(reporter=probable_user.name)
+                ##uncomment when issue #404 is resolved## new_issue.update(reporter=probable_user.name)
             else:
                 LOGGER.debug("The default for reporter is the logged in user who makes the call to create_issue, which will be the automation svc user." + self.settings.get("username", "") + ".  Good enough for now.")
                 #However, we may later wish to give the admin an option to configure an alternate dummy user and/or "SD manager" or "SD receptionist" to receive these issues immediately for more "ownership". 
